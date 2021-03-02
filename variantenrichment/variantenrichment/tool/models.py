@@ -52,6 +52,9 @@ class Project(models.Model):
     mutation_taster_score = models.IntegerField(null=True, blank=True)
     genes = models.FileField(upload_to=project_directory, blank=True)
 
+    def __str__(self):
+        return self.title + ': ' + self.state
+
 
 class VariantFile(models.Model):
     """ Describes individual vcfs uploaded to the Project
@@ -63,6 +66,9 @@ class VariantFile(models.Model):
     individual_name = models.CharField(max_length=20) # user defined?
     uploaded_file = models.FileField(upload_to=vcf_directory)
     population = models.CharField(max_length=5, blank=True)
+
+    def __str__(self):
+        return self.individual_name
 
 
 class BackgroundSet(models.Model):
