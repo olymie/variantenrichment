@@ -2,12 +2,28 @@ import uuid
 from django.db import models
 
 
-def vcf_directory(instance, filename):
+def get_vcf_directory(instance, filename):
     return 'projects/{0}/vcf/{1}'.format(instance.project.uuid, filename)
 
 
-def project_directory(instance, filename):
+def get_project_directory(instance, filename):
     return 'projects/{0}/{1}'.format(instance.uuid, filename)
+
+
+def get_default_bgset():
+    """ get a default value for result status; create new result if not available """
+    return BackgroundSet.objects.get_or_create(name="IGSR")[0]
+
+
+class BackgroundSet(models.Model):
+    """ Describes background data set
+    """
+    name = models.CharField(max_length=30, unique=True)
+    file = models.FileField()
+    population = models.FileField(blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Project(models.Model):
@@ -46,11 +62,14 @@ class Project(models.Model):
         max_digits=6,
         decimal_places=5,
         default=0.001)
-    # background = models.ForeignKey()
+    background = models.ForeignKey(
+        BackgroundSet,
+        default=get_default_bgset,
+        on_delete=models.SET_DEFAULT)
     filter_population = models.BooleanField(default=False)
     cadd_score = models.IntegerField(null=True, blank=True)
     mutation_taster_score = models.IntegerField(null=True, blank=True)
-    genes = models.FileField(upload_to=project_directory, blank=True)
+    genes = models.FileField(upload_to=get_project_directory, blank=True)
 
     def __str__(self):
         return self.title + ': ' + self.state
@@ -64,15 +83,8 @@ class VariantFile(models.Model):
         on_delete=models.CASCADE
     )
     individual_name = models.CharField(max_length=20) # user defined?
-    uploaded_file = models.FileField(upload_to=vcf_directory)
+    uploaded_file = models.FileField(upload_to=get_vcf_directory)
     population = models.CharField(max_length=5, blank=True)
 
     def __str__(self):
         return self.individual_name
-
-
-class BackgroundSet(models.Model):
-    """ Describes background data set
-    """
-    # file = models.FileField()
-    # population = models.FileField()
