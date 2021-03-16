@@ -17,10 +17,11 @@ def get_default_bgset():
 
 class BackgroundSet(models.Model):
     """ Describes background data set
+        file and population fields are paths to corresponding files on server
     """
     name = models.CharField(max_length=30, unique=True)
-    file = models.FileField()
-    population = models.FileField(blank=True)
+    file = models.CharField(max_length=200)
+    population = models.CharField(max_length=50, blank=True)
 
     def __str__(self):
         return self.name
