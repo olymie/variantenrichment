@@ -6,7 +6,8 @@ from django.views import defaults as default_views
 from django.views.generic import TemplateView
 
 from variantenrichment.tool.views import (
-    ProjectResultsView
+    ProjectDetailView,
+    ConfirmProcessingView
 )
 
 urlpatterns = [
@@ -20,7 +21,8 @@ urlpatterns = [
     path("users/", include("variantenrichment.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     # Your stuff: custom urls includes go here
-    path("project/<uuid:pk>/", ProjectResultsView.as_view(), name="project-result")
+    path("project/detail/<uuid:pk>/", ProjectDetailView.as_view(), name="project-detail"),
+    path("project/start-processing/<uuid:pk>/", ConfirmProcessingView.as_view(), name="confirm-processing")
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 

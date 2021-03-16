@@ -89,3 +89,28 @@ class VariantFile(models.Model):
 
     def __str__(self):
         return self.individual_name
+
+
+class BackgroundJob(models.Model):
+    """ Describes jobs that are passed to Celery to run as background tasks
+    """
+    STATE_CHOICES = [
+        ('new', 'New'),
+        ('running', 'Running'),
+        ('done', 'Finished'),
+        ('error', 'Error')
+    ]
+
+    name = models.CharField(max_length=30)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE
+    )
+    state = models.CharField(
+        max_length=7,
+        choices=STATE_CHOICES,
+        default='new'
+    )
+
+    def __str__(self):
+        return self.name + ': ' + self.state

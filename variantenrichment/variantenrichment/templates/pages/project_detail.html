@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+{{project.title}}
+{{project.uuid}}
+{{project.state}}
+
+<ul>
+{% for job in project.backgroundjob_set.all %}
+    <li>{{ job.name }}, {{ job.state }}</li>
+{% endfor %}
+</ul>
+
+<a href="/project/start-processing/{{project.uuid}}">Start processing</a>
+{% endblock content %}
