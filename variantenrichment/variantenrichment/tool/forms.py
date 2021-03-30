@@ -1,5 +1,10 @@
-from django import forms
+from django.forms import Form, ModelForm
+from .models import Project, VariantFile
 
-class ConfirmProcessingForm(forms.Form):
+class ConfirmProcessingForm(Form):
     # name = forms.CharField()
     pass
+
+
+# class ManageFilesForm(Form):
+

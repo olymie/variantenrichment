@@ -1,9 +1,47 @@
 {% extends "base.html" %}
 
 {% block content %}
-{{project.title}}
-{{project.uuid}}
-{{project.state}}
+<header>
+  <h1>{{project.title}}</h1>
+  {{project.uuid}}
+  <mark>{{project.state}}</mark>
+</header>
+
+<section>
+  <div>
+    <mark>Background set</mark>: {{project.background}}
+  </div>
+  <div>
+    <mark>Impact</mark>: {{project.impact}}
+  </div>
+  <div>
+    <mark>Frequency</mark>: {{project.frequency}}
+  </div>
+  <div>
+    <mark>CADD Score</mark>: {{project.cadd_score}}
+  </div>
+  <div>
+    <mark>Mutation Taster Score</mark>: {{project.mutation_taster_score}}
+  </div>
+  <div class="detail detail--genes" data-file="{{project.genes}}">
+    <mark>Genes</mark>: <span class="detail__value"></span>
+  </div>
+
+  <ul>
+  {% for vcf in project.variantfile_set.all %}
+    <li>
+      {{ vcf.individual_name }}
+      {% if vcf.population %}
+      , {{ vcf.population }}
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+
+  <a href="/project/manage-files/{{project.uuid}}">Manage VCF files</a>
+  <a href="/project/upload-file/{{project.uuid}}">Add new VCF file</a>
+</section>
+
 
 <ul>
 {% for job in project.backgroundjob_set.all %}
@@ -12,4 +50,7 @@
 </ul>
 
 <a href="/project/start-processing/{{project.uuid}}">Start processing</a>
+
+<a href="/project/update/{{project.uuid}}">Update parameters</a>
+
 {% endblock content %}
