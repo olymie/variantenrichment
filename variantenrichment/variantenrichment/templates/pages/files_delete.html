@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<p>You're about to delete following files:</p>
+
+<form method="post">{% csrf_token %}
+  {% for file in selected_files %}
+  {{ file.id }} -- {{ file.individual_name }}<br/>
+  {% endfor %}
+
+  <input type="submit" name="delete_confirm" value="Delete files">
+  <a href="{% url 'project-detail' pk %}">Cancel</a>
+</form>
+
+{% endblock content %}

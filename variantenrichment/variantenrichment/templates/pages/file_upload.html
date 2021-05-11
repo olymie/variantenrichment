@@ -4,6 +4,6 @@
 <form method="post" enctype="multipart/form-data">{% csrf_token %}
   {{ form.as_p }}
   <input type="submit" value="Add">
-  <a href="/project/detail/{{ view.kwargs.pk }}">Cancel</a>
+  <a href="{% url 'project-detail' view.kwargs.pk %}">Cancel</a>
 </form>
 {% endblock content %}

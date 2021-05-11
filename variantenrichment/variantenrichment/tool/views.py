@@ -1,6 +1,8 @@
-from django.shortcuts import render
-from .forms import ConfirmProcessingForm
-from django.views.generic import View, DetailView, FormView
+from django.shortcuts import render, redirect
+from django.http import HttpResponseRedirect
+from django.core.exceptions import ValidationError
+from .forms import ConfirmProcessingForm, FilesDeleteForm, FilesChooseForm, SearchForm
+from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 
@@ -32,6 +34,18 @@ class ProjectCreateView(CreateView):
 class ProjectDetailView(DetailView):
     model = Project
     template_name = "pages/project_detail.html"
+    form_class = FilesChooseForm
+
+    def post(self, request, *args, **kwargs):
+        file_ids = []
+        for key in request.POST.keys():
+            if key.startswith("file_"):
+                file_id = int(key.split("_", 1)[1])
+                file_ids.append(file_id)
+
+        self.request.session['selected_files'] = file_ids
+
+        return redirect('files-delete', pk=self.kwargs['pk'])
 
 
 class ProjectUpdateView(UpdateView):
@@ -69,8 +83,28 @@ class FileUploadView(CreateView):
         return super().form_valid(form)
 
 
-# class FileManage(FormView):
+class FilesDeleteView(FormView):
+    model = Project
+    template_name = "pages/files_delete.html"
+    form_class = FilesDeleteForm
 
+    def get(self, request, *args, **kwargs):
+        file_ids = self.request.session.get('selected_files')
+        files = VariantFile.objects.filter(pk__in=file_ids)
+        context = {
+            'form': self.form_class,
+            'selected_files': files,
+            'pk': self.kwargs['pk']
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        file_ids = self.request.session.get('selected_files')
+
+        if request.POST.get("delete_confirm"):
+            print(file_ids)
+            VariantFile.objects.filter(pk__in=file_ids).delete()
+            return redirect('project-detail', pk=self.kwargs['pk'])
 
 
 class ConfirmProcessingView(FormView):
@@ -87,9 +121,32 @@ class ConfirmProcessingView(FormView):
     def form_valid(self, form, **kwargs):
         bj = BackgroundJob(
             name="Test Job",
-            project=Project.objects.get(uuid = self.kwargs['pk']),
+            project=Project.objects.get(uuid=self.kwargs['pk']),
             state="new"
         )
         bj.save()
         change_project_state_task.apply_async(args=[bj.pk], countdown=1)
         return super().form_valid(form)
+
+
+class ProjectResultsView(TemplateView):
+    template_name = "pages/project_results.html"
+
+
+class SearchView(FormView):
+    template_name = "pages/search.html"
+    form_class = SearchForm
+
+    def post(self, request, *args, **kwargs):
+        search_id = request.POST.get("search-uuid")
+        try:
+            project = Project.objects.get(uuid=search_id)
+        except (ValidationError, Project.DoesNotExist):
+            project = 0
+
+        print(search_id, project)
+        context = {
+            'project': project,
+            'form': self.form_class,
+        }
+        return render(request, self.template_name, context)

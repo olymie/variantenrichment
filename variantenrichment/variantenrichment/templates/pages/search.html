@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method="post">{% csrf_token %}
+    <input type="text" placeholder="Project UUID" name="search-uuid">
+    <input type="submit" value="Search">
+</form>
+
+{% if project %}
+  <a href="{% url 'project-detail' project.uuid %}">{{project.title}}</a>
+{% elif project == 0 %}
+  Nothing was found
+{% endif %}
+
+{% endblock content %}
