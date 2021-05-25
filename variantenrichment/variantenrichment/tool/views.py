@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect
 from django.core.exceptions import ValidationError
 from .forms import ConfirmProcessingForm, FilesDeleteForm, FilesChooseForm, SearchForm
 from django.views.generic import DetailView, FormView, TemplateView
@@ -120,7 +119,7 @@ class ConfirmProcessingView(FormView):
 
     def form_valid(self, form, **kwargs):
         bj = BackgroundJob(
-            name="Test Job",
+            name="Processing",
             project=Project.objects.get(uuid=self.kwargs['pk']),
             state="new"
         )

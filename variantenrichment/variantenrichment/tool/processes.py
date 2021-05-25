@@ -1,6 +1,7 @@
 from time import sleep
 from .models import BackgroundJob
 
+
 def change_project_state(bj: BackgroundJob):
     sleep(5)
     bj.state = "running"

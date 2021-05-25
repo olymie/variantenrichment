@@ -326,3 +326,4 @@ variantenrichment/media/
 .pytest_cache/
 
 
+/variantenrichment/data/
