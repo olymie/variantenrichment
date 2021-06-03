@@ -1,7 +1,21 @@
 import subprocess
+from os import path
 import numpy as np
 import pandas as pd
 import vcfpy as vp
+
+
+def get_directory(path_to_dir):
+    """ creates a directory if it doesn't exist
+        :param path_to_dir: a path to check on
+        :return: a created directory or an existing one with the given path
+    """
+    if not path.exists(path_to_dir):
+        subprocess.run([
+            "mkdir", "-p",
+            path_to_dir
+        ])
+    return path_to_dir
 
 
 def merge_files(vcf_files, output_file):
@@ -10,10 +24,14 @@ def merge_files(vcf_files, output_file):
         :param output_file: name of an output file WITHOUT SUFFICES
         :return: output file name with the right extension
     """
+
     if len(vcf_files) > 1:
-        names_file = "../data/example/file_names.txt"
+        names_file = "file_names.txt"
         with open(names_file, "w") as file:
             for vcf in vcf_files:
+                subprocess.run([
+                    "tabix", "-p", "vcf", vcf
+                ])
                 file.write(vcf + '\n')
 
         subprocess.run([
@@ -54,11 +72,11 @@ def normalize_sample(vcf_file, output_file):
     ])
 
     subprocess.run([
-        "bgzip", output_file + ".vcf"
+        "bgzip", "-f", output_file + ".vcf"
     ])
 
     subprocess.run([
-        "tabix", "-p", "vcf", output_file + ".vcf.gz"
+        "tabix", "-f", "-p", "vcf", output_file + ".vcf.gz"
     ])
 
     return output_file + ".vcf.gz"
@@ -75,9 +93,7 @@ def annotate_sample(vcf_file, fasta_file, gnomad_file, db_file, output_file):
     """
 
     subprocess.run([
-        "java",
-        "-jar",
-        "../data/jannovar-cli-0.35.jar",
+        "jannovar",
         "annotate-vcf",
         "--show-all",
         "--ref-fasta", fasta_file,
@@ -149,12 +165,6 @@ def filter_by_impact_frequency(vcf_file, impact, impact_mod, genes_mod, frequenc
         "-o", output_file + ".vcf", "tmp.vcf"
     ])
 
-    # subprocess.run([
-    #     "bcftools", "filter", "-i",
-    #     'INFO ~! "GNOMAD_EXOMES_AF_ALL"',
-    #     "-o", output_file + "2.vcf", "tmp.vcf"
-    # ])
-
     subprocess.run([
         "rm", "tmp.vcf"
     ])
@@ -175,11 +185,7 @@ def get_impact_str(impact, impact_mod, genes_mod):
         if impact == "HIGH":
             return impact_str
         else:
-            impact_str += ' || INFO/ANN ~ "|MODERATE|"'
-            if impact == "MODERATE":
-                return impact_str
-            else:
-                return impact_str + ' || INFO/ANN ~ "|LOW|"'
+            return impact_str + ' || INFO/ANN ~ "|MODERATE|"'
 
     if impact == "MODERATE" and impact_mod == "HIGH":
         for gene in genes_mod:
@@ -288,6 +294,7 @@ def count_variants(vcf_file, genes, output_file):
         :param output_file: name of an output file WITHOUT SUFFICES
         :return: string: output file name with the right extension
     """
+
     reader = vp.Reader.from_path(vcf_file)
     samples = reader.header.samples.names
 
@@ -335,14 +342,8 @@ DB_FILE = "../data/hg19_refseq_curated.ser"
 FASTA_FILE = "../data/hs37d5.fa"
 GNOMAD_EXOMES_FILE = "../data/gnomad.exomes.r2.0.2.sites.vcf.gz"
 
-# TODO: REMOVE, FOR MAKING EX FILES
-# filter_by_gene("../data/example/HG00107.vcf.gz", "../data/example/genes_initial.bed", "../data/example/HG00107_ex")
-# filter_by_gene("../data/example/HG00102.vcf.gz", "../data/example/genes_initial.bed", "../data/example/HG00102_ex")
-# norm_vcf = normalize_sample("../data/joint.vcf.gz", "../data/joint.normalized")
-# annotate_sample(norm_vcf, FASTA_FILE, GNOMAD_EXOMES_FILE, DB_FILE, "../data/joint.annotated")
 #
 # case_merged = merge_files(CASE_FILES, "../data/example/case.joint")
-#
 # case_annotated = annotate_sample(vcf_file=case_merged,
 #                                  fasta_file=FASTA_FILE,
 #                                  gnomad_file=GNOMAD_EXOMES_FILE,
@@ -350,10 +351,7 @@ GNOMAD_EXOMES_FILE = "../data/gnomad.exomes.r2.0.2.sites.vcf.gz"
 #                                  output_file="../data/example/case.joint.annotated")
 #
 #
-# case_filtered = filter_by_gene(case_annotated, GENE_FILE, "../data/example/case.joint.annotated.gene_filtered")
-
-# case_filtered = "../data/example/case.joint.annotated.gene_filtered.vcf.gz"
-#
+# case_filtered = filter_by_gene(case_annotated, GENE_FILE, "../data/example/case.joint.annotated.gene_filtered.vcf")
 # case_filtered = filter_by_impact_frequency(vcf_file=case_filtered,
 #                                            impact=IMPACT,
 #                                            impact_mod=IMPACT_MOD,
@@ -361,8 +359,15 @@ GNOMAD_EXOMES_FILE = "../data/gnomad.exomes.r2.0.2.sites.vcf.gz"
 #                                            frequency=FREQUENCY,
 #                                            output_file="../data/example/case.joint.annotated.frequency_filtered")
 
+# genes_inheritance = get_genes_dict(INHERITANCE_FILE)
+
+# case_filtered = filter_file(vcf_file=case_filtered,
+#                             genes_names=genes_inheritance.keys(),
+#                             impact=IMPACT,
+#                             impact_mod=IMPACT_MOD,
+#                             output_file="../data/example/case.joint.annotated.filtered")
+
 # control_filtered = filter_by_gene(CONTROL_FILE, GENE_FILE, "../data/example/control.gene_filtered")
-# control_filtered = "../data/example/control.gene_filtered.vcf.gz"
 # control_filtered = filter_by_impact_frequency(vcf_file=control_filtered,
 #                                               impact=IMPACT,
 #                                               impact_mod=IMPACT_MOD,
@@ -370,28 +375,11 @@ GNOMAD_EXOMES_FILE = "../data/gnomad.exomes.r2.0.2.sites.vcf.gz"
 #                                               frequency=FREQUENCY,
 #                                               output_file="../data/example/control.frequency_filtered")
 
-# case_filtered = "../data/example/case.joint.annotated.frequency_filtered.vcf"
-# control_filtered = "../data/example/control.frequency_filtered.vcf"
-
-# genes_inheritance = get_genes_dict(INHERITANCE_FILE)
-#
-# case_filtered = filter_file(vcf_file=case_filtered,
-#                             genes_names=genes_inheritance.keys(),
-#                             impact=IMPACT,
-#                             impact_mod=IMPACT_MOD,
-#                             output_file="../data/example/case.joint.annotated.filtered")
-#
 # control_filtered = filter_file(vcf_file=control_filtered,
 #                                genes_names=genes_inheritance.keys(),
 #                                impact=IMPACT,
 #                                impact_mod=IMPACT_MOD,
 #                                output_file="../data/example/control.filtered")
 
-
-control_filtered = filter_by_gene("../data/example/joint.annotated.vcf.gz", GENE_FILE, "../data/example/joint.gene_filtered")
-control_filtered = filter_by_impact_frequency(vcf_file=control_filtered,
-                                              impact=IMPACT,
-                                              impact_mod=IMPACT_MOD,
-                                              genes_mod=GENES_MOD,
-                                              frequency=FREQUENCY,
-                                              output_file="../data/example/joint.frequency_filtered")
+# count_variants(case_filtered, genes_inheritance, "../data/example/case")
+# count_variants(control_filtered, genes_inheritance, "../data/example/control")

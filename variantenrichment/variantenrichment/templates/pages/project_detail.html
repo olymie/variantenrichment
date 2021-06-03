@@ -16,36 +16,57 @@
     <mark>Impact</mark>
     : {{project.impact}}
   </div>
+  {% if project.impact_exception %}
+  <div>
+    <mark>Different impact</mark>
+    : {{project.impact_exception}}
+    for genes {{project.genes_exception}}
+  </div>
+  {% endif %}
   <div>
     <mark>Frequency</mark>
     : {{project.frequency}}
   </div>
+  {% if project.cadd_score %}
   <div>
     <mark>CADD Score</mark>
     : {{project.cadd_score}}
   </div>
+  {% endif %}
+  {% if project.mutation_taster_score %}
   <div>
     <mark>Mutation Taster Score</mark>
     : {{project.mutation_taster_score}}
   </div>
-  <div class="detail detail--genes" data-file="{{project.genes}}">
+  {% endif %}
+  {% if project.genes %}
+  <div class="detail" data-file="{{project.genes}}">
     <mark>Genes</mark>
-    : <span class="detail__value"></span>
+    : <span class="detail__value">{{project.genes}}</span>
+  </div>
+  {% endif %}
+  <div class="detail" data-file="{{project.inheritance}}">
+    <mark>Inheritance model</mark>
+    : <span class="detail__value">{{project.inheritance}}</span>
   </div>
 
-  <form method="POST">{% csrf_token %}
-    <ul>
-      {% for vcf in project.variantfile_set.all %}
-      <li>
-        <input type="checkbox" name="file_{{ vcf.id }}" value="1"/>
-        {{ vcf.individual_name }}
-      </li>
-      {% endfor %}
-    </ul>
-    {% if project.variantfile_set.all %}
-    <input type="submit" name="delete-files" value="Delete selected files">
-    {% endif %}
-  </form>
+  <div>
+    <mark>VCF files:</mark>
+
+    <form method="POST">{% csrf_token %}
+      <ul>
+        {% for vcf in project.variantfile_set.all %}
+        <li>
+          <input type="checkbox" name="file_{{ vcf.id }}" value="1"/>
+          {{ vcf.individual_name }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% if project.variantfile_set.all %}
+      <input type="submit" name="delete-files" value="Delete selected files">
+      {% endif %}
+    </form>
+  </div>
 
   <a href="{% url 'file-upload' project.uuid %}">Add a new VCF file</a>
 </section>
@@ -57,9 +78,13 @@
   {% endfor %}
 </ul>
 
+{% if project.state == "initial" %}
 <a href="{% url 'confirm-processing' project.uuid %}">Start processing</a>
+{% endif %}
 
+{% if project.state != "annotating" and project.state != "analysing" and project.state != "computing" %}
 <a href="{% url 'project-update' project.uuid %}">Update parameters</a>
+{% endif %}
 
 {% if project.state == "done" %}
 <a href="{% url 'project-results' project.uuid %}">Show results</a>

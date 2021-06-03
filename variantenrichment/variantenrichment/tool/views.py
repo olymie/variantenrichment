@@ -11,16 +11,17 @@ from .models import (
     VariantFile
 )
 
-from .tasks import change_project_state_task
+from .tasks import process_task
 
 
 class ProjectCreateView(CreateView):
     model = Project
     template_name = "pages/project_create.html"
     fields = [
-        'title', 'impact', 'frequency', 'background',
+        'title', 'impact', 'frequency',
+        'impact_exception', 'genes_exception', 'background',
         'filter_population', 'cadd_score',
-        'mutation_taster_score', 'genes'
+        'mutation_taster_score', 'genes', 'inheritance'
     ]
 
     def get_success_url(self, **kwargs):
@@ -51,9 +52,10 @@ class ProjectUpdateView(UpdateView):
     model = Project
     template_name = "pages/project_update.html"
     fields = [
-        'title', 'impact', 'frequency', 'background',
+        'title', 'impact', 'frequency',
+        'impact_exception', 'genes_exception', 'background',
         'filter_population', 'cadd_score',
-        'mutation_taster_score', 'genes'
+        'mutation_taster_score', 'genes', 'inheritance'
     ]
 
     def get_success_url(self, **kwargs):
@@ -124,7 +126,8 @@ class ConfirmProcessingView(FormView):
             state="new"
         )
         bj.save()
-        change_project_state_task.apply_async(args=[bj.pk], countdown=1)
+        print("hidd")
+        process_task.apply_async(args=[bj.pk], countdown=1)
         return super().form_valid(form)
 
 

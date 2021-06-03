@@ -33,13 +33,14 @@ class Project(models.Model):
     STATE_CHOICES = [
         ('initial', 'Initial'),
         ('annotating', 'Annotating variants'),
-        ('annotated', 'Ready for analysis'),
+        ('annotated', 'Ready for CADD annotation or analysis'),
+        ('cadd-annotating', 'Annotating with CADD functional scores'),
+        ('cadd-annotated', 'Ready for analysis'),
         ('analysing', 'Analysing data sets'),
         ('computing', 'Computing statistics'),
         ('done', 'Done')
     ]
     IMPACT_CHOICES = [
-        ('LOW', 'Low'),
         ('MODERATE', 'Moderate'),
         ('HIGH', 'High')
     ]
@@ -50,7 +51,7 @@ class Project(models.Model):
         editable=False)
     title = models.CharField(max_length=100)
     state = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=STATE_CHOICES,
         default='initial'
     )
@@ -58,6 +59,15 @@ class Project(models.Model):
         max_length=10,
         choices=IMPACT_CHOICES,
         default='MODERATE'
+    )
+    impact_exception = models.CharField(
+        max_length=10,
+        choices=IMPACT_CHOICES,
+        blank=True
+    )
+    genes_exception = models.CharField(
+        max_length=200,
+        blank=True
     )
     frequency = models.DecimalField(
         max_digits=6,
@@ -71,6 +81,7 @@ class Project(models.Model):
     cadd_score = models.IntegerField(null=True, blank=True)
     mutation_taster_score = models.IntegerField(null=True, blank=True)
     genes = models.FileField(upload_to=get_project_directory, blank=True)
+    inheritance = models.FileField(upload_to=get_project_directory)
 
     def __str__(self):
         return self.title + ': ' + self.state
@@ -83,7 +94,7 @@ class VariantFile(models.Model):
         Project,
         on_delete=models.CASCADE
     )
-    individual_name = models.CharField(max_length=20) # user defined?
+    individual_name = models.CharField(max_length=20)  # user defined?
     uploaded_file = models.FileField(upload_to=get_vcf_directory)
     population = models.CharField(max_length=5, blank=True)
 
