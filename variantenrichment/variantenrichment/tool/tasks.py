@@ -13,12 +13,12 @@ def process_task(bj_id):
 
     (case_filtered, control_filtered, genes_dict) = filter_samples(project=bj.project, case_file=case_annotated)
 
-    case_count, control_count = count_statistics(project=bj.project,
-                                                 case_file=case_filtered,
-                                                 control_file=control_filtered,
-                                                 genes_dict=genes_dict)
+    scores = count_statistics(project=bj.project,
+                              case_file=case_filtered,
+                              control_file=control_filtered,
+                              genes_dict=genes_dict)
 
     bj.state = "done"
     bj.save()
 
-    return case_count, control_count
+    return scores

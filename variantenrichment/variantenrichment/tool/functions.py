@@ -1,8 +1,12 @@
 import subprocess
+import re
+import requests
 from os import path
+from bs4 import BeautifulSoup
 import numpy as np
 import pandas as pd
 import vcfpy as vp
+import scipy.stats as stats
 
 
 def get_directory(path_to_dir):
@@ -326,3 +330,75 @@ def count_variants(vcf_file, genes, output_file):
     # make two different tables (normal and gen-wise collapsed)
     df.to_csv(output_file + '.csv')
     df_collapse.to_csv(output_file + '.collapsed.csv')
+
+    return output_file + '.collapsed.csv'
+
+
+CADD_URL = "https://cadd.gs.washington.edu/"
+CADD_URL_UPLOAD = CADD_URL + "upload"
+
+
+def save_cadd_file(cadd_id, output_file):
+    cadd_file_url = CADD_URL + "static/finished/" + cadd_id
+
+    if requests.head(cadd_file_url).status_code == 200:
+        cadd_scores = requests.get(cadd_file_url)
+        open(output_file + ".tsv.gz", "wb").write(cadd_scores.content)
+        return "done"
+    else:
+        print("try again later")
+        return cadd_id
+
+
+def post_file_cadd(vcf_file):
+    try:
+        file = {"file": open(vcf_file, "rb")}
+
+        data = {
+            "version": "GRCh37-v1.6",
+            "inclAnno": "Yes",
+            "submit": "Upload variants",
+        }
+
+        r = requests.post(CADD_URL_UPLOAD, data=data, files=file)
+
+        soup = BeautifulSoup(r.text, "html.parser")
+        p_success = soup.find("p", string=re.compile("You successfully uploaded"))
+        print(p_success)
+        link_parts = p_success.find_next_sibling("p").find("a")["href"].split("/")
+        return link_parts[len(link_parts) - 1]
+
+    except Exception as e:
+        print(e)
+        return None
+
+
+def find_fisher_scores(csv_case, csv_control, output_file):
+    case_df = pd.read_csv(csv_case,
+                          header=0,
+                          index_col=0)
+    control_df = pd.read_csv(csv_control,
+                             header=0,
+                             index_col=0)
+
+    score_df = pd.DataFrame(index=case_df.index.values,
+                            columns=["case +", "case -", "control +", "control -", "p value"])
+
+    score_df["case +"] = case_df.sum(axis=1)
+    score_df["case -"] = len(case_df.columns) - score_df["case +"]
+    score_df["control +"] = control_df.sum(axis=1)
+    score_df["control -"] = len(control_df.columns) - score_df["control +"]
+
+    pvalues = []
+
+    for index, row in score_df.iterrows():
+        oddratio, pvalue = stats.fisher_exact([
+            [row["case +"], row["case -"]],
+            [row["control +"], row["control -"]]
+        ])
+        pvalues.append(pvalue)
+
+    score_df["p value"] = pvalues
+    score_df.to_csv(output_file + '.csv')
+
+    return output_file + '.csv'

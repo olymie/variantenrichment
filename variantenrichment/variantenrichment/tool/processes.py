@@ -1,6 +1,6 @@
 from time import sleep
 from .models import Project, VariantFile
-from .functions import get_directory, merge_files, annotate_sample, filter_by_gene, filter_by_impact_frequency, filter_file, get_genes_dict, count_variants
+from .functions import get_directory, merge_files, annotate_sample, filter_by_gene, filter_by_impact_frequency, filter_file, get_genes_dict, count_variants, find_fisher_scores, post_file_cadd, save_cadd_file
 
 FILES_DIR = "variantenrichment/data/projects/"
 DB_FILE = "variantenrichment/data/hg19_refseq_curated.ser"
@@ -23,6 +23,10 @@ def assemble_case_sample(project: Project):
 
     merged = merge_files(vcf_files=vcf_files,
                          output_file=project_files_dir + "/case")
+
+    if project.cadd_score:
+        project.cadd_job = post_file_cadd(vcf_file=merged)
+
     annotated = annotate_sample(vcf_file=merged,
                                 fasta_file=FASTA_FILE,
                                 gnomad_file=GNOMAD_EXOMES_FILE,
@@ -30,7 +34,19 @@ def assemble_case_sample(project: Project):
                                 output_file=project_files_dir + "/case.annotated")
 
     project.state = "annotated"
+
+    if project.cadd_score:
+
+        project.cadd_job = save_cadd_file(cadd_id=project.cadd_job,
+                                          output_file=project_files_dir + "/case_cadd")
+
+        if project.cadd_job == "done":
+            project.state = "cadd-annotated"
+        elif project.cadd_job:
+            project.state = "cadd-annotating"
+
     project.save()
+
     return annotated
 
 
@@ -107,7 +123,11 @@ def count_statistics(project: Project, case_file, control_file, genes_dict):
                                  genes=genes_dict,
                                  output_file=project_files_dir + "/control")
 
+    scores_csv = find_fisher_scores(csv_case=case_csv,
+                                    csv_control=control_csv,
+                                    output_file=project_files_dir + "/scores")
+
     project.state = "done"
     project.save()
 
-    return case_csv, control_csv
+    return scores_csv

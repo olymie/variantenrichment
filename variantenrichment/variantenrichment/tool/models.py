@@ -79,7 +79,7 @@ class Project(models.Model):
         on_delete=models.SET_DEFAULT)
     filter_population = models.BooleanField(default=False)
     cadd_score = models.IntegerField(null=True, blank=True)
-    mutation_taster_score = models.IntegerField(null=True, blank=True)
+    cadd_job = models.CharField(max_length=60, blank=True)
     genes = models.FileField(upload_to=get_project_directory, blank=True)
     inheritance = models.FileField(upload_to=get_project_directory)
 
