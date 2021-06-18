@@ -382,23 +382,23 @@ def find_fisher_scores(csv_case, csv_control, output_file):
                              index_col=0)
 
     score_df = pd.DataFrame(index=case_df.index.values,
-                            columns=["case +", "case -", "control +", "control -", "p value"])
+                            columns=["case+", "case-", "control+", "control-", "p"])
 
-    score_df["case +"] = case_df.sum(axis=1)
-    score_df["case -"] = len(case_df.columns) - score_df["case +"]
-    score_df["control +"] = control_df.sum(axis=1)
-    score_df["control -"] = len(control_df.columns) - score_df["control +"]
+    score_df["case+"] = case_df.sum(axis=1)
+    score_df["case-"] = len(case_df.columns) - score_df["case+"]
+    score_df["control+"] = control_df.sum(axis=1)
+    score_df["control-"] = len(control_df.columns) - score_df["control+"]
 
     pvalues = []
 
     for index, row in score_df.iterrows():
         oddratio, pvalue = stats.fisher_exact([
-            [row["case +"], row["case -"]],
-            [row["control +"], row["control -"]]
+            [row["case+"], row["case-"]],
+            [row["control+"], row["control-"]]
         ])
         pvalues.append(pvalue)
 
-    score_df["p value"] = pvalues
+    score_df["p"] = pvalues
     score_df.to_csv(output_file + '.csv')
 
     return output_file + '.csv'

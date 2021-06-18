@@ -7,3 +7,37 @@
   background-color: #f2dede;
   border-color: #eed3d7;
   color: #b94a48; }
+
+.is-hidden {
+  display: none; }
+
+.table-results tr:nth-child(2n + 1) td, .table-results tr:nth-child(2n + 1) th {
+  border-top-width: 2px; }
+
+.table-results__compact .is-additional {
+  display: none; }
+
+.filter {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: end;
+      -ms-flex-pack: end;
+          justify-content: flex-end;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  margin: 42px 0; }
+  .filter__button {
+    background: #d8e1e9;
+    border-color: #d8e1e9;
+    margin-right: 32px;
+    -webkit-box-shadow: none !important;
+            box-shadow: none !important; }
+    .filter__button.is-active {
+      background: #7392b7;
+      border-color: #7392b7;
+      color: #ffffff; }
+  .filter__input {
+    width: 100px;
+    margin-left: 5px; }

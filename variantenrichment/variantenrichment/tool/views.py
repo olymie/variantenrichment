@@ -4,6 +4,7 @@ from .forms import ConfirmProcessingForm, FilesDeleteForm, FilesChooseForm, Sear
 from django.views.generic import DetailView, FormView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
+import os
 
 from .models import (
     Project,
@@ -20,8 +21,7 @@ class ProjectCreateView(CreateView):
     fields = [
         'title', 'impact', 'frequency',
         'impact_exception', 'genes_exception', 'background',
-        'filter_population', 'cadd_score',
-        'mutation_taster_score', 'genes', 'inheritance'
+        'filter_population', 'cadd_score', 'genes', 'inheritance'
     ]
 
     def get_success_url(self, **kwargs):
@@ -54,8 +54,7 @@ class ProjectUpdateView(UpdateView):
     fields = [
         'title', 'impact', 'frequency',
         'impact_exception', 'genes_exception', 'background',
-        'filter_population', 'cadd_score',
-        'mutation_taster_score', 'genes', 'inheritance'
+        'filter_population', 'cadd_score', 'genes', 'inheritance'
     ]
 
     def get_success_url(self, **kwargs):
@@ -133,6 +132,27 @@ class ConfirmProcessingView(FormView):
 
 class ProjectResultsView(TemplateView):
     template_name = "pages/project_results.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        module_dir = os.path.dirname(__file__)
+        path_to_files = os.path.join(module_dir, "../data/projects/" + str(self.kwargs['pk']))
+        scores = []
+        header = None
+
+        with open(path_to_files + "/scores.csv") as scores_file:
+            for line in scores_file:
+                line = line.strip()
+                line_arr = line.split(",")
+                if not header:
+                    line_arr[0] = "gene"
+                    header = line_arr
+                else:
+                    scores.append(dict(zip(header, line_arr)))
+
+        context["scores"] = scores
+        return context
 
 
 class SearchView(FormView):

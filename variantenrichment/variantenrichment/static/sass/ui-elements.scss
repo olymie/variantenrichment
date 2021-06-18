@@ -1,0 +1,42 @@
+.is-hidden {
+    display: none;
+}
+
+.table-results {
+    tr:nth-child(2n + 1) {
+        td, th {
+            border-top-width: 2px;
+        }
+    }
+
+    &__compact {
+        .is-additional {
+            display: none;
+        }
+    }
+}
+
+.filter {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 42px 0;
+
+    &__button {
+        background: color(gainsboro);
+        border-color: color(gainsboro);
+        margin-right: 32px;
+        box-shadow: none!important;
+
+        &.is-active {
+            background: color(cerulean-frost);
+            border-color: color(cerulean-frost);
+            color: color(white);
+        }
+    }
+
+    &__input {
+        width: 100px;
+        margin-left: 5px;
+    }
+}

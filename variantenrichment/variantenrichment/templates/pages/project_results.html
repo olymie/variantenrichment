@@ -2,8 +2,41 @@
 
 {% block content %}
 
-    <p>Here the results will be shown... someday</p>
+<header class="filter">
+    <button class="btn filter__button do-displayCompact">Show p values only</button>
+<!--    &lt;!&ndash;&ndash;&gt;<button class="btn button-filter do-displayRelevant">Show genes with significant difference</button>-->
+    <span>Show genes with p value <= </span>
+    <input class="form-control filter__input do-displayRelevant" type="text" placeholder="" value="1">
+</header>
 
-    <a href="{% url 'project-detail' view.kwargs.pk %}">Back to project detail</a>
+<table class="table table-bordered table-results">
+    <thead>
+    <tr>
+        <th>Gene</th>
+        <th class="is-additional">Group</th>
+        <th class="is-additional">With variations</th>
+        <th class="is-additional">Without variations</th>
+        <th>p value</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for line in scores %}
+        <tr>
+            <th rowspan="2">{{ line.gene }}</th>
+            <td class="is-additional">case</td>
+            <td class="is-additional">{{ line.case_pos }}</td>
+            <td class="is-additional">{{ line.case_neg }}</td>
+            <td rowspan="2" class="table-results__p">{{ line.p|floatformat:4}}</td>
+        </tr>
+        <tr>
+            <td class="is-additional">control</td>
+            <td class="is-additional">{{ line.control_pos }}</td>
+            <td class="is-additional">{{ line.control_neg }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'project-detail' view.kwargs.pk %}">Back to project detail</a>
 
 {% endblock content %}
