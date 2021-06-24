@@ -1,6 +1,7 @@
 from time import sleep
 from .models import Project, VariantFile
-from .functions import get_directory, merge_files, annotate_sample, filter_by_gene, filter_by_impact_frequency, filter_file, get_genes_dict, count_variants, find_fisher_scores, post_file_cadd, save_cadd_file
+from .functions import get_directory, merge_files, annotate_sample, filter_by_gene, filter_by_impact_frequency, \
+    filter_file, get_genes_dict, count_variants, find_fisher_scores, post_file_cadd, save_cadd_file, add_cadd_annotations
 
 FILES_DIR = "variantenrichment/data/projects/"
 DB_FILE = "variantenrichment/data/hg19_refseq_curated.ser"
@@ -18,14 +19,14 @@ def assemble_case_sample(project: Project):
         'variantenrichment/media/' + str(vcf.uploaded_file) for vcf in VariantFile.objects.filter(project=project)
     ]
 
-    project.state = "annotating"
-    project.save()
-
     merged = merge_files(vcf_files=vcf_files,
                          output_file=project_files_dir + "/case")
 
+    project.state = "annotating"
+    project.save()
+
     if project.cadd_score:
-        project.cadd_job = post_file_cadd(vcf_file=merged)
+        project.cadd_file = post_file_cadd(vcf_file=merged)
 
     annotated = annotate_sample(vcf_file=merged,
                                 fasta_file=FASTA_FILE,
@@ -33,16 +34,17 @@ def assemble_case_sample(project: Project):
                                 db_file=DB_FILE,
                                 output_file=project_files_dir + "/case.annotated")
 
+    # annotated = project_files_dir + "case.annotated.vcf.gz"
+
     project.state = "annotated"
 
     if project.cadd_score:
+        project.cadd_file = save_cadd_file(cadd_id=project.cadd_file,
+                                           output_file=project_files_dir + "/case_cadd")
 
-        project.cadd_job = save_cadd_file(cadd_id=project.cadd_job,
-                                          output_file=project_files_dir + "/case_cadd")
-
-        if project.cadd_job == "done":
+        if project.cadd_file.startswith(project_files_dir):
             project.state = "cadd-annotated"
-        elif project.cadd_job:
+        elif project.cadd_file:
             project.state = "cadd-annotating"
 
     project.save()
@@ -52,6 +54,12 @@ def assemble_case_sample(project: Project):
 
 def filter_samples(project: Project, case_file):
     project_files_dir = get_directory(FILES_DIR + str(project.uuid))
+
+    if project.cadd_score:
+        case_file = add_cadd_annotations(vcf_file=case_file,
+                                         cadd_file=project.cadd_file,
+                                         output_file=project_files_dir + "/case.cadd-annotated")
+
     project.state = "analysing"
     project.save()
 
@@ -105,6 +113,11 @@ def filter_samples(project: Project, case_file):
                                impact=project.impact,
                                impact_mod=project.impact_exception,
                                output_file=project_files_dir + "/control.filtered")
+
+    # if project.cadd_score and project.cadd_job != "done":
+    # project.cadd_job = save_cadd_file(cadd_id=project.cadd_job,
+    #                                           output_file=project_files_dir + "/case_cadd")
+    # cadd filter
 
     return case_file, control_file, genes_dict
 

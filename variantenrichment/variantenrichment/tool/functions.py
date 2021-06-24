@@ -344,7 +344,7 @@ def save_cadd_file(cadd_id, output_file):
     if requests.head(cadd_file_url).status_code == 200:
         cadd_scores = requests.get(cadd_file_url)
         open(output_file + ".tsv.gz", "wb").write(cadd_scores.content)
-        return "done"
+        return output_file + ".tsv.gz"
     else:
         print("try again later")
         return cadd_id
@@ -371,6 +371,55 @@ def post_file_cadd(vcf_file):
     except Exception as e:
         print(e)
         return None
+
+
+def add_cadd_annotations(vcf_file, cadd_file, output_file):
+    reader = vp.Reader.from_path(vcf_file)
+    reader.header.add_format_line(vp.OrderedDict([
+        ("ID", "CADDRS"), ("Number", "1"), ("Type", "Float"), ("Description", "CADD raw score")
+    ]))
+    reader.header.add_format_line(vp.OrderedDict([
+        ("ID", "CADDPHRED"), ("Number", "1"), ("Type", "Float"), ("Description", "CADD PHRED-scaled score")
+    ]))
+    writer = vp.Writer.from_path(output_file + ".vcf", reader.header)
+
+    cadd_df = pd.read_csv(cadd_file,
+                          delimiter="\t",
+                          header=1,
+                          index_col=None)
+    cadd_df["#Chrom"] = cadd_df["#Chrom"].astype(str)
+    cadd_line_num = 0
+    cadd_len = len(cadd_df)
+
+    for record in reader:
+        counter = 0
+        cadd_line = cadd_df.iloc[cadd_line_num]
+        print("NEW RECORD; CURRENTLY on line", cadd_line_num)
+        print(record.CHROM, record.POS, cadd_line["#Chrom"], cadd_line["Pos"])
+
+        while record.CHROM != cadd_line["#Chrom"] or record.POS != cadd_line["Pos"]:
+            cadd_line_num = (cadd_line_num + 1) % cadd_len
+            cadd_line = cadd_df.iloc[cadd_line_num]
+            counter += 1
+
+            if counter == cadd_len:
+                print("made a round, not found")
+                record.add_format("CADDRS", ".")
+                record.add_format("CADDPHRED", ".")
+                writer.write_record(record)
+                break
+
+        if counter == cadd_len:
+            continue
+
+        print("MAKING NORMAL RECORD:", record.CHROM, record.POS, cadd_line["#Chrom"], cadd_line["Pos"])
+        print("currently on line", cadd_line_num)
+        record.add_format("CADDRS", cadd_line["RawScore"])
+        record.add_format("CADDPHRED", cadd_line["PHRED"])
+        cadd_line_num = (cadd_line_num + 1) % cadd_len
+        writer.write_record(record)
+
+    return output_file + ".vcf"
 
 
 def find_fisher_scores(csv_case, csv_control, output_file):
