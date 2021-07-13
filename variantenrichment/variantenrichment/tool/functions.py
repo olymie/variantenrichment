@@ -33,6 +33,12 @@ def merge_files(vcf_files, output_file):
         names_file = "file_names.txt"
         with open(names_file, "w") as file:
             for vcf in vcf_files:
+                if not vcf.endswith(".gz"):
+                    subprocess.run([
+                        "bgzip", "-f", vcf
+                    ])
+                    vcf += ".gz"
+
                 subprocess.run([
                     "tabix", "-p", "vcf", vcf
                 ])
@@ -344,10 +350,16 @@ def save_cadd_file(cadd_id, output_file):
     if requests.head(cadd_file_url).status_code == 200:
         cadd_scores = requests.get(cadd_file_url)
         open(output_file + ".tsv.gz", "wb").write(cadd_scores.content)
-        return output_file + ".tsv.gz"
+
+        subprocess.run([
+            "bgzip", "-d", output_file + ".tsv.gz"
+        ])
+
+        return output_file + ".tsv"
+
     else:
         print("try again later")
-        return cadd_id
+        return ""
 
 
 def post_file_cadd(vcf_file):
@@ -356,7 +368,7 @@ def post_file_cadd(vcf_file):
 
         data = {
             "version": "GRCh37-v1.6",
-            "inclAnno": "Yes",
+            "inclAnno": "No",
             "submit": "Upload variants",
         }
 
@@ -370,15 +382,15 @@ def post_file_cadd(vcf_file):
 
     except Exception as e:
         print(e)
-        return None
+        return ""
 
 
 def add_cadd_annotations(vcf_file, cadd_file, output_file):
     reader = vp.Reader.from_path(vcf_file)
-    reader.header.add_format_line(vp.OrderedDict([
+    reader.header.add_info_line(vp.OrderedDict([
         ("ID", "CADDRS"), ("Number", "1"), ("Type", "Float"), ("Description", "CADD raw score")
     ]))
-    reader.header.add_format_line(vp.OrderedDict([
+    reader.header.add_info_line(vp.OrderedDict([
         ("ID", "CADDPHRED"), ("Number", "1"), ("Type", "Float"), ("Description", "CADD PHRED-scaled score")
     ]))
     writer = vp.Writer.from_path(output_file + ".vcf", reader.header)
@@ -394,8 +406,6 @@ def add_cadd_annotations(vcf_file, cadd_file, output_file):
     for record in reader:
         counter = 0
         cadd_line = cadd_df.iloc[cadd_line_num]
-        print("NEW RECORD; CURRENTLY on line", cadd_line_num)
-        print(record.CHROM, record.POS, cadd_line["#Chrom"], cadd_line["Pos"])
 
         while record.CHROM != cadd_line["#Chrom"] or record.POS != cadd_line["Pos"]:
             cadd_line_num = (cadd_line_num + 1) % cadd_len
@@ -404,20 +414,28 @@ def add_cadd_annotations(vcf_file, cadd_file, output_file):
 
             if counter == cadd_len:
                 print("made a round, not found")
-                record.add_format("CADDRS", ".")
-                record.add_format("CADDPHRED", ".")
+                record.INFO["CADDRS"] = "."
+                record.INFO["CADDPHRED"] = "."
                 writer.write_record(record)
                 break
 
         if counter == cadd_len:
             continue
 
-        print("MAKING NORMAL RECORD:", record.CHROM, record.POS, cadd_line["#Chrom"], cadd_line["Pos"])
-        print("currently on line", cadd_line_num)
-        record.add_format("CADDRS", cadd_line["RawScore"])
-        record.add_format("CADDPHRED", cadd_line["PHRED"])
+        record.INFO["CADDRS"] = cadd_line["RawScore"]
+        record.INFO["CADDPHRED"] = cadd_line["PHRED"]
         cadd_line_num = (cadd_line_num + 1) % cadd_len
         writer.write_record(record)
+
+    return output_file + ".vcf"
+
+
+def filter_by_cadd(vcf_file, cadd_score, output_file):
+    subprocess.run([
+        "bcftools", "filter", "-i",
+        'INFO/CADDPHRED = "." || INFO/CADDPHRED >= ' + str(cadd_score),
+        "-o", output_file + ".vcf", vcf_file
+    ])
 
     return output_file + ".vcf"
 
@@ -431,19 +449,19 @@ def find_fisher_scores(csv_case, csv_control, output_file):
                              index_col=0)
 
     score_df = pd.DataFrame(index=case_df.index.values,
-                            columns=["case+", "case-", "control+", "control-", "p"])
+                            columns=["case_pos", "case_neg", "control_pos", "control_neg", "p"])
 
-    score_df["case+"] = case_df.sum(axis=1)
-    score_df["case-"] = len(case_df.columns) - score_df["case+"]
-    score_df["control+"] = control_df.sum(axis=1)
-    score_df["control-"] = len(control_df.columns) - score_df["control+"]
+    score_df["case_pos"] = case_df.sum(axis=1)
+    score_df["case_neg"] = len(case_df.columns) - score_df["case_pos"]
+    score_df["control_pos"] = control_df.sum(axis=1)
+    score_df["control_neg"] = len(control_df.columns) - score_df["control_pos"]
 
     pvalues = []
 
     for index, row in score_df.iterrows():
         oddratio, pvalue = stats.fisher_exact([
-            [row["case+"], row["case-"]],
-            [row["control+"], row["control-"]]
+            [row["case_pos"], row["case_neg"]],
+            [row["control_pos"], row["control_neg"]]
         ])
         pvalues.append(pvalue)
 

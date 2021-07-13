@@ -28,16 +28,17 @@ class BackgroundSet(models.Model):
 
 
 class Project(models.Model):
-    """ Holds all information about user defined project settings
+    """ Stores all information about user defined project settings
     """
     STATE_CHOICES = [
         ('initial', 'Initial'),
         ('annotating', 'Annotating variants'),
-        ('annotated', 'Ready for CADD annotation or analysis'),
-        ('cadd-annotating', 'Annotating with CADD functional scores'),
-        ('cadd-annotated', 'Ready for analysis'),
-        ('analysing', 'Analysing data sets'),
-        ('computing', 'Computing statistics'),
+        ('annotated', 'Ready for filtering'),
+        ('filtering', 'Filtering data sets'),
+        ('cadd-waiting', 'Waiting for CADD answer'),
+        ('cadd-checking', 'Checking if CADD scores are ready'),
+        ('cadd-filtering', 'Annotating with CADD functional scores and filtering data sets by PHRED cutoff'),
+        ('analyzing', 'Analyzing datasets and computing statistics'),
         ('done', 'Done')
     ]
     IMPACT_CHOICES = [
@@ -79,7 +80,6 @@ class Project(models.Model):
         on_delete=models.SET_DEFAULT)
     filter_population = models.BooleanField(default=False)
     cadd_score = models.IntegerField(null=True, blank=True)
-    cadd_file = models.CharField(max_length=60, blank=True)
     genes = models.FileField(upload_to=get_project_directory, blank=True)
     inheritance = models.FileField(upload_to=get_project_directory)
 
@@ -96,10 +96,32 @@ class VariantFile(models.Model):
     )
     individual_name = models.CharField(max_length=20)  # user defined?
     uploaded_file = models.FileField(upload_to=get_vcf_directory)
-    population = models.CharField(max_length=5, blank=True)
 
     def __str__(self):
         return self.individual_name
+
+
+class ProjectFiles(models.Model):
+    """ Stores paths to last created case and control files,
+        CADD job ids and paths to downloaded CADD tsv files
+    """
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE
+    )
+    case_annotated = models.CharField(max_length=200)
+    case_filtered = models.CharField(max_length=200, blank=True)
+    control_filtered = models.CharField(max_length=200, blank=True)
+    cadd_case_id = models.CharField(max_length=60, blank=True)
+    cadd_case = models.CharField(max_length=200, blank=True)
+    cadd_control_id = models.CharField(max_length=60, blank=True)
+    cadd_control = models.CharField(max_length=200, blank=True)
+    case_csv = models.CharField(max_length=200, blank=True)
+    control_csv = models.CharField(max_length=200, blank=True)
+    scores_csv = models.CharField(max_length=200, blank=True)
+
+    def __str__(self):
+        return self.case_annotated
 
 
 class BackgroundJob(models.Model):

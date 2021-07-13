@@ -1,18 +1,23 @@
+from time import sleep
+
 from django.shortcuts import render, redirect
 from django.core.exceptions import ValidationError
-from .forms import ConfirmProcessingForm, FilesDeleteForm, FilesChooseForm, SearchForm
-from django.views.generic import DetailView, FormView, TemplateView
+from .forms import ConfirmProcessingForm, FilesDeleteForm, FilesChooseForm, SearchForm, ProjectForm
+from django.views.generic import DetailView, FormView, TemplateView, View
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-import os
 
 from .models import (
     Project,
     BackgroundJob,
-    VariantFile
+    VariantFile,
+    ProjectFiles
 )
+from .tasks import annotate_task, check_cadd_task, filter_task
 
-from .tasks import process_task
+
+def get_project(pk):
+    return Project.objects.get(pk=pk)
 
 
 class ProjectCreateView(CreateView):
@@ -58,6 +63,12 @@ class ProjectUpdateView(UpdateView):
     ]
 
     def get_success_url(self, **kwargs):
+        project = get_project(self.kwargs['pk'])
+        print(project)
+        if project.state != "initial" and project.state != "annotated":
+            project.state = "annotated"
+            project.save()
+
         return reverse_lazy(
             'project-detail',
             kwargs={'pk': self.object.pk}
@@ -67,19 +78,22 @@ class ProjectUpdateView(UpdateView):
 class FileUploadView(CreateView):
     model = VariantFile
     template_name = "pages/file_upload.html"
-    fields = ['individual_name', 'uploaded_file', 'population']
-
-    def get_project(self):
-        return Project.objects.get(pk=self.kwargs.get('pk'))
+    fields = ['individual_name', 'uploaded_file']
 
     def get_success_url(self, **kwargs):
+        project = get_project(self.kwargs['pk'])
+        print(project)
+        if project.state != "initial":
+            project.state = "initial"
+            project.save()
+
         return reverse_lazy(
             'project-detail',
             kwargs={'pk': self.kwargs['pk']}
         )
 
     def form_valid(self, form):
-        form.instance.project = self.get_project()
+        form.instance.project = get_project(self.kwargs['pk'])
         return super().form_valid(form)
 
 
@@ -102,9 +116,27 @@ class FilesDeleteView(FormView):
         file_ids = self.request.session.get('selected_files')
 
         if request.POST.get("delete_confirm"):
-            print(file_ids)
             VariantFile.objects.filter(pk__in=file_ids).delete()
+
+            project = get_project(self.kwargs['pk'])
+            print(project)
+            if project.state != "initial":
+                project.state = "initial"
+                project.save()
+
             return redirect('project-detail', pk=self.kwargs['pk'])
+
+
+class CheckCaddView(View):
+    def get(self, *args, **kwargs):
+        bj = BackgroundJob(
+            name="Checking for CADD answer",
+            project=Project.objects.get(uuid=self.kwargs['pk']),
+            state="new"
+        )
+        bj.save()
+        check_cadd_task.apply_async(args=[bj.pk], countdown=1)
+        return redirect('project-detail', pk=self.kwargs['pk'])
 
 
 class ConfirmProcessingView(FormView):
@@ -119,14 +151,20 @@ class ConfirmProcessingView(FormView):
         )
 
     def form_valid(self, form, **kwargs):
+        project_state = get_project(self.kwargs['pk']).state
+        job_name = "Annotating" if project_state == "initial" else "Filtering"
         bj = BackgroundJob(
-            name="Processing",
+            name=job_name,
             project=Project.objects.get(uuid=self.kwargs['pk']),
             state="new"
         )
         bj.save()
-        print("hidd")
-        process_task.apply_async(args=[bj.pk], countdown=1)
+
+        if project_state == "initial":
+            annotate_task.apply_async(args=[bj.pk], countdown=1)
+        else:
+            filter_task.apply_async(args=[bj.pk], countdown=1)
+
         return super().form_valid(form)
 
 
@@ -135,13 +173,11 @@ class ProjectResultsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        module_dir = os.path.dirname(__file__)
-        path_to_files = os.path.join(module_dir, "../data/projects/" + str(self.kwargs['pk']))
+        project_files = ProjectFiles.objects.get(project=Project.objects.get(uuid=self.kwargs['pk']))
         scores = []
         header = None
 
-        with open(path_to_files + "/scores.csv") as scores_file:
+        with open(project_files.scores_csv) as scores_file:
             for line in scores_file:
                 line = line.strip()
                 line_arr = line.split(",")
