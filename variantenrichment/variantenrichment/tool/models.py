@@ -78,7 +78,7 @@ class Project(models.Model):
         BackgroundSet,
         default=get_default_bgset,
         on_delete=models.SET_DEFAULT)
-    filter_population = models.BooleanField(default=False)
+    population = models.CharField(max_length=20, blank=True)
     cadd_score = models.IntegerField(null=True, blank=True)
     genes = models.FileField(upload_to=get_project_directory, blank=True)
     inheritance = models.FileField(upload_to=get_project_directory)

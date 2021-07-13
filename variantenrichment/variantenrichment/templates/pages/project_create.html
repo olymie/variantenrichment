@@ -3,6 +3,20 @@
 {% block content %}
 <form method="post" enctype="multipart/form-data">{% csrf_token %}
     {{ form.as_p }}
+
+<!--    {% for hidden in form.hidden_fields %}-->
+<!--        {{ hidden }}-->
+<!--    {% endfor %}-->
+
+    <p>Population:
+        <label class="form-check"><input type="checkbox" name="population" value="" class="form-check-input do-checkAll" />All</label>
+        <label class="form-check"><input type="checkbox" name="population" value="AFR" class="form-check-input" />African</label>
+        <label class="form-check"><input type="checkbox" name="population" value="AMR" class="form-check-input" />America </label>
+        <label class="form-check"><input type="checkbox" name="population" value="EAS" class="form-check-input" />East Asian</label>
+        <label class="form-check"><input type="checkbox" name="population" value="EUR" class="form-check-input" />European</label>
+        <label class="form-check"><input type="checkbox" name="population" value="SAS" class="form-check-input" />South Asian</label>
+    </p>
+
     <input type="submit" value="Create project">
 </form>
 {% endblock content %}

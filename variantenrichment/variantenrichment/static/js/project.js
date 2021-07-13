@@ -1,15 +1,55 @@
 /* Project specific Javascript goes here. */
 document.addEventListener('DOMContentLoaded', () => {
+   initFileNames();
    initResultTable();
+   initPopulationFields();
+});
 
-   const detailsWithFiles = [].slice.call(document.querySelectorAll('.detail[data-file]'));
+function initPopulationFields() {
+   const populationField = document.getElementById('id_population');
+   if (!populationField) return;
+
+   const checkboxes = [].slice.call(document.querySelectorAll('input[type=checkbox][name="population"]'));
+   const checkboxAll = document.querySelector('.do-checkAll');
+   let populationArr = []
+
+   checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+         if (checkbox === checkboxAll) {
+            populationArr = [];
+
+            checkboxes.forEach(checkboxPart => {
+               if (checkboxPart.classList.contains('do-checkAll')) return;
+
+               checkboxPart.checked = checkbox.checked;
+            });
+         } else {
+            populationArr = checkboxes
+             .filter(i => i.checked && i.value)
+             .map(i => i.value);
+
+            if (populationArr.length === 5) {
+               populationArr = [];
+               checkboxAll.checked = true
+            } else {
+               checkboxAll.checked = false
+            }
+         }
+
+         populationField.value = populationArr.join(",")
+      })
+   });
+}
+
+function initFileNames() {
+   const detailsWithFiles = [].slice.call(document.querySelectorAll('.project-detail[data-file]'));
 
    detailsWithFiles.forEach(detail => {
       let nameSplit = detail.dataset.file.split('/');
-      const detailValue = detail.querySelector('.detail__value');
+      const detailValue = detail.querySelector('.project-detail__value');
       detailValue.innerText = nameSplit[nameSplit.length - 1]
    });
-});
+}
 
 function initResultTable() {
    const resultTable = document.querySelector(".table-results");

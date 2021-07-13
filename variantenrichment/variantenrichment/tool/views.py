@@ -23,11 +23,7 @@ def get_project(pk):
 class ProjectCreateView(CreateView):
     model = Project
     template_name = "pages/project_create.html"
-    fields = [
-        'title', 'impact', 'frequency',
-        'impact_exception', 'genes_exception', 'background',
-        'filter_population', 'cadd_score', 'genes', 'inheritance'
-    ]
+    form_class = ProjectForm
 
     def get_success_url(self, **kwargs):
         return reverse_lazy(
@@ -56,11 +52,7 @@ class ProjectDetailView(DetailView):
 class ProjectUpdateView(UpdateView):
     model = Project
     template_name = "pages/project_update.html"
-    fields = [
-        'title', 'impact', 'frequency',
-        'impact_exception', 'genes_exception', 'background',
-        'filter_population', 'cadd_score', 'genes', 'inheritance'
-    ]
+    form_class = ProjectForm
 
     def get_success_url(self, **kwargs):
         project = get_project(self.kwargs['pk'])
