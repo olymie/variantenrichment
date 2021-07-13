@@ -39,3 +39,55 @@ $red: #b94a48;
 @import "variables";
 @import "ui-elements";
 @import "base";
+
+.project-header {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    padding-right: 400px;
+
+    &__uuid {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 400px;
+        text-align: right;
+    }
+
+    &__state {
+        padding: 2px 5px;
+        margin-left: 10px;
+        background-color: color(snow);
+
+        &--done {
+            background-color: color(june-bud);
+        }
+    }
+}
+
+.project-body {
+    margin-top: 42px;
+}
+
+.project-detail {
+    & + & {
+        margin-top: 10px;
+    }
+
+    &__files {
+        list-style: none;
+
+        li {
+            margin-top: 5px;
+        }
+    }
+}
+
+.project-jobs {
+    margin-top: 42px;
+}
+
+.project-actions {
+    margin-top: 62px;
+}

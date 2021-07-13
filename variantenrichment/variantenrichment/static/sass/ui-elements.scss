@@ -1,3 +1,27 @@
+.button {
+    box-shadow: none!important;
+
+    &--primary {
+        background-color: color(cerulean-frost);
+        border-color: color(cerulean-frost);
+        color: color(white);
+
+        &:hover {
+            background-color: darken(color(cerulean-frost), 10%);
+            border-color: darken(color(cerulean-frost), 10%);
+            color: color(white);
+        }
+    }
+
+    &--secondary {
+        border-color: color(cerulean-frost);
+
+        &:hover {
+            background-color: lighten(color(cerulean-frost), 40%);
+        }
+    }
+}
+
 .is-hidden {
     display: none;
 }
@@ -23,10 +47,7 @@
     margin: 42px 0;
 
     &__button {
-        background: color(gainsboro);
-        border-color: color(gainsboro);
         margin-right: 32px;
-        box-shadow: none!important;
 
         &.is-active {
             background: color(cerulean-frost);
