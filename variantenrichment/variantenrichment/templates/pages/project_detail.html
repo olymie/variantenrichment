@@ -36,17 +36,20 @@
     {% if project.genes %}
     <div class="project-detail" data-file="{{project.genes}}">
         <mark>Genes</mark>
-        : <span class="project-detail__value">{{project.genes}}</span>
+        : <span class="project-detail__value"></span>
     </div>
     {% endif %}
     <div class="project-detail" data-file="{{project.inheritance}}">
         <mark>Inheritance model</mark>
-        : <span class="project-detail__value">{{project.inheritance}}</span>
+        : <span class="project-detail__value"></span>
     </div>
     {% if project.population %}
         <div class="project-detail">
         <mark>Population</mark>
-        : {{project.population}}
+        :
+        {% for pop in project.population %}
+            {{ pop }},
+        {% endfor %}
     </div>
     {% endif %}
 
