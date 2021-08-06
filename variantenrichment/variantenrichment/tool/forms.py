@@ -1,8 +1,18 @@
-from django.forms import Form, ModelForm, HiddenInput, CheckboxSelectMultiple
-from .models import Project, VariantFile
+from django.forms import Form, ModelForm, HiddenInput, CheckboxSelectMultiple, TypedMultipleChoiceField
+from .models import Project
 
 
 class ProjectForm(ModelForm):
+    population = TypedMultipleChoiceField(choices=[
+            ("AFR", "African"),
+            ("AMR", "American"),
+            ("EAS", "East Asian"),
+            ("EUR", "European"),
+            ("SAS", "South Asian"),
+        ],
+        required=False,
+        widget=CheckboxSelectMultiple)
+
     class Meta:
         model = Project
         fields = [
@@ -10,13 +20,6 @@ class ProjectForm(ModelForm):
             'impact_exception', 'genes_exception', 'background',
             'population', 'cadd_score', 'genes', 'inheritance'
         ]
-        widgets = {'population': CheckboxSelectMultiple(choices=[
-            ("AFR", "African"),
-            ("AMR", "American"),
-            ("EAS", "East Asian"),
-            ("EUR", "European"),
-            ("SAS", "South Asian")
-        ])}
 
 
 class ConfirmProcessingForm(Form):

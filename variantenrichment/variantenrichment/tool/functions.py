@@ -1,5 +1,6 @@
 import subprocess
 import re
+import sys
 import requests
 from os import path
 from bs4 import BeautifulSoup
@@ -7,6 +8,7 @@ import numpy as np
 import pandas as pd
 import vcfpy as vp
 import scipy.stats as stats
+import matplotlib.pyplot as plt
 
 
 def get_directory(path_to_dir):
@@ -52,12 +54,15 @@ def merge_files(vcf_files, output_file):
             "rm", names_file
         ])
 
-        vcf_merged = "tmp.vcf"
-
     else:
-        vcf_merged = vcf_files[0]
+        vcf_content = subprocess.check_output([
+            "zcat", vcf_files[0]
+        ])
 
-    normalized = normalize_sample(vcf_merged, output_file)
+        with open("tmp.vcf", "w+") as tmp_file:
+            tmp_file.write(vcf_content.decode())
+
+    normalized = normalize_sample("tmp.vcf", output_file)
 
     subprocess.run([
         "rm", "tmp.vcf"
@@ -111,11 +116,15 @@ def annotate_sample(vcf_file, fasta_file, gnomad_file, db_file, output_file):
         "-d", db_file,
         "-i", vcf_file,
         "-o", output_file + ".vcf.gz"
-    ])
+    ], check=True)
+
+    print("Done with Jannovar, tabix is next", file=sys.stderr)
 
     subprocess.run([
         "tabix", "-p", "vcf", output_file + ".vcf.gz"
-    ])
+    ], check=True)
+
+    print("Done with tabix, result is %s" % (output_file + ".vcf.gz"), file=sys.stderr)
 
     return output_file + ".vcf.gz"
 
@@ -148,64 +157,74 @@ def filter_by_gene(vcf_file, gene_file, output_file):
     return normalized
 
 
-def filter_by_impact_frequency(vcf_file, impact, impact_mod, genes_mod, frequency, output_file):
-    """ filters variant file by impact and frequency
+def filter_by_frequency(vcf_file, frequency, output_file):
+    """ filters variant file by frequency
         :param vcf_file: variant file
-        :param impact: variant impact HIGH/MODERATE/LOW
-        :param impact_mod: a different variant impact for a group of genes
-        :param genes_mod: list of gene names for which the impact is impact_mod
         :param frequency: variant frequency in population
         :param output_file: name of an output file WITHOUT SUFFICES
         :return: string: output file name with the right extension
     """
 
-    impact_str = get_impact_str(impact, impact_mod, genes_mod)
-
-    print(impact_str)
-
-    subprocess.run([
-        "bcftools", "filter", "-i",
-        impact_str,
-        "-o", "tmp.vcf", vcf_file
-    ])
+    freq_str = 'INFO/GNOMAD_EXOMES_AF_ALL = "." || INFO/GNOMAD_EXOMES_AF_ALL < ' + str(frequency)
+    print(freq_str)
 
     subprocess.run([
         "bcftools", "filter", "-i",
-        'INFO/GNOMAD_EXOMES_AF_ALL = "." || INFO/GNOMAD_EXOMES_AF_ALL < ' + str(frequency),
-        "-o", output_file + ".vcf", "tmp.vcf"
-    ])
-
-    subprocess.run([
-        "rm", "tmp.vcf"
+        freq_str,
+        "-o", output_file + ".vcf", vcf_file
     ])
 
     return output_file + ".vcf"
 
 
-def get_impact_str(impact, impact_mod, genes_mod):
-    """ constructs a string for filtering based on defined impact
-        :param impact: default variant impact HIGH/MODERATE/LOW
-        :param impact_mod: a different variant impact for a group of genes
-        :param genes_mod: list of gene names for which the impact is impact_mod
-        :return: a string that can be used for filtering by bcftools
-    """
+def filter_by_impact(vcf_file, impact, impact_mod, genes_mod, output_file):
     impact_str = 'INFO/ANN ~ "|HIGH|"'
 
-    if not len(genes_mod):
-        if impact == "HIGH":
-            return impact_str
-        else:
-            return impact_str + ' || INFO/ANN ~ "|MODERATE|"'
+    if impact == "synonymous_variant":
+        impact_str = 'INFO/ANN ~ "|' + impact + '|"'
 
-    if impact == "MODERATE" and impact_mod == "HIGH":
+    elif not len(genes_mod):
+        if impact != "HIGH":
+            impact_str += ' || INFO/ANN ~ "|MODERATE|"'
+
+    elif impact == "MODERATE" and impact_mod == "HIGH":
         for gene in genes_mod:
             impact_str += ' || (INFO/ANN ~ "|MODERATE|" && INFO/ANN !~ "|' + gene + '|")'
 
-    if impact == "HIGH" and impact_mod == "MODERATE":
+    elif impact == "HIGH" and impact_mod == "MODERATE":
         for gene in genes_mod:
             impact_str += ' || (INFO/ANN ~ "|MODERATE|" && INFO/ANN ~ "|' + gene + '|")'
 
-    return impact_str
+    print("FILTER BY IMPACT:", impact_str)
+
+    subprocess.run([
+        "bcftools", "filter", "-i",
+        impact_str,
+        "-o", output_file + ".vcf", vcf_file
+    ])
+
+    return output_file + ".vcf"
+
+
+def filter_population(vcf_file, samples_file, population, output_file):
+    samples_df = pd.read_csv(samples_file,
+                             delimiter="\t",
+                             header=0,
+                             usecols=["Sample name", "Superpopulation code"],
+                             index_col=None)
+
+    samples_filtered = samples_df[samples_df["Superpopulation code"].isin(population)]["Sample name"]
+    samples_filtered.to_csv("sample_names.txt", index=False, header=False)
+
+    subprocess.run([
+        "bcftools", "view", "-S", "sample_names.txt", "-c1", "--force-samples", "-o", output_file + ".vcf", vcf_file
+    ])
+
+    # subprocess.run([
+    #     "rm", "sample_names.txt"
+    # ])
+
+    return output_file + ".vcf"
 
 
 def get_genes_dict(genes_file):
@@ -234,17 +253,20 @@ def get_genes_dict(genes_file):
     return genes
 
 
-def is_interesting(ann, genes_names, impact_def, impact_mod):
+def is_interesting(ann, genes_names, impact_def, impact_mod, impact_position):
     """ checks if the given annotation includes right gene name and impact
         :param ann: element of record.INFO['ANN'] list of jannovar annotations
         :param genes_names: list of genes names on which to look for variants
         :param impact_def: default impact defined by user
         :param impact_mod: an exception impact defined by user for a group of genes
+        :param impact_position: position of impact value in ANN string to use for filtering
+            2: LOW/MODERATE/HIGH
+            1: synonymous_variant
         :return: boolean value
     """
     ann_list = ann.split('|')
 
-    impact = ann_list[2]
+    impact = ann_list[impact_position]
     if impact not in [impact_def, impact_mod]:
         return False
 
@@ -255,7 +277,6 @@ def is_interesting(ann, genes_names, impact_def, impact_mod):
     return True
 
 
-# comment this function as well
 def filter_file(vcf_file, genes_names, impact, impact_mod, output_file):
     """ creates a new vcf file with annotations about "interesting" variants only
         :param vcf_file: jannovar annotated vcf file
@@ -268,12 +289,17 @@ def filter_file(vcf_file, genes_names, impact, impact_mod, output_file):
     reader = vp.Reader.from_path(vcf_file)
     writer = vp.Writer.from_path(output_file + ".vcf", reader.header)
 
+    # position of impact value in ANN string to use for filtering
+    # 2: LOW/MODERATE/HIGH
+    # 1: synonymous_variant
+    impact_position = 1 if impact == "synonymous_variant" else 2
+
     for record in reader:
         annotations = record.INFO['ANN']
         # leave only annotations for "interesting" genes and impact
         record.INFO['ANN'][:] = [
             ann for ann in annotations
-            if is_interesting(ann, genes_names, impact, impact_mod)
+            if is_interesting(ann, genes_names, impact, impact_mod, impact_position)
         ]
 
         if len(record.INFO['ANN']) != 0:
@@ -325,7 +351,7 @@ def count_variants(vcf_file, genes, output_file):
                 if not call.is_variant:
                     continue
 
-                # don't count heterozygous variants if they're inherited rezessively
+                # don't count heterozygous variants if they're inherited recessively
                 if call.is_het and genes[gene_name] != 'Autosomal dominant':
                     continue
 
@@ -342,24 +368,6 @@ def count_variants(vcf_file, genes, output_file):
 
 CADD_URL = "https://cadd.gs.washington.edu/"
 CADD_URL_UPLOAD = CADD_URL + "upload"
-
-
-def save_cadd_file(cadd_id, output_file):
-    cadd_file_url = CADD_URL + "static/finished/" + cadd_id
-
-    if requests.head(cadd_file_url).status_code == 200:
-        cadd_scores = requests.get(cadd_file_url)
-        open(output_file + ".tsv.gz", "wb").write(cadd_scores.content)
-
-        subprocess.run([
-            "bgzip", "-d", output_file + ".tsv.gz"
-        ])
-
-        return output_file + ".tsv"
-
-    else:
-        print("try again later")
-        return ""
 
 
 def post_file_cadd(vcf_file):
@@ -381,7 +389,28 @@ def post_file_cadd(vcf_file):
         return link_parts[len(link_parts) - 1]
 
     except Exception as e:
-        print(e)
+        print("error:", e)
+        return ""
+
+
+def save_cadd_file(cadd_id, output_file):
+    cadd_file_url = CADD_URL + "static/finished/" + cadd_id
+
+    if requests.head(cadd_file_url).status_code == 200:
+        cadd_scores = requests.get(cadd_file_url)
+        # open(output_file + ".tsv.gz", "wb").write(cadd_scores.content)
+
+        with open(output_file + ".tsv.gz", "wb") as tsv_file:
+            tsv_file.write(cadd_scores.content)
+
+        subprocess.run([
+            "bgzip", "-d", "-f", output_file + ".tsv.gz"
+        ])
+
+        return output_file + ".tsv"
+
+    else:
+        print("try again later, sorry")
         return ""
 
 
@@ -469,3 +498,25 @@ def find_fisher_scores(csv_case, csv_control, output_file):
     score_df.to_csv(output_file + '.csv')
 
     return output_file + '.csv'
+
+
+def visualize_p_values(scores_file, output_file):
+    scores_df = pd.read_csv(scores_file,
+                            header=0,
+                            index_col=0)
+    p_obs = scores_df["p"]
+    p_exp = np.linspace(0, 1, num=len(p_obs) + 1, endpoint=False)[1:]
+    p_obs = np.sort(p_obs)
+    save_pp_plot(p_exp, p_obs, output_file + ".png")
+
+    return output_file + ".png"
+
+
+def save_pp_plot(x_sample, y_sample, output_file):
+    plt.xlim(0, 1)
+    plt.ylim(0, 1)
+    fig, ax = plt.subplots()
+    ax.scatter(x_sample, y_sample, color="royalblue")
+    ax.plot([0, 1], [0, 1], color="dimgrey", ls="dashed")
+    fig.savefig(output_file)
+

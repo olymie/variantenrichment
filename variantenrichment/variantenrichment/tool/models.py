@@ -22,6 +22,7 @@ class BackgroundSet(models.Model):
     """
     name = models.CharField(max_length=30, unique=True)
     file = models.CharField(max_length=200)
+    samples_file = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
@@ -78,7 +79,7 @@ class Project(models.Model):
         BackgroundSet,
         default=get_default_bgset,
         on_delete=models.SET_DEFAULT)
-    population = ArrayField(models.CharField(max_length=3, blank=False), default=list)
+    population = ArrayField(models.CharField(max_length=3), default=list, null=True, blank=True)
     cadd_score = models.IntegerField(null=True, blank=True)
     genes = models.FileField(upload_to=get_project_directory, blank=True)
     inheritance = models.FileField(upload_to=get_project_directory)
@@ -119,6 +120,7 @@ class ProjectFiles(models.Model):
     case_csv = models.CharField(max_length=200, blank=True)
     control_csv = models.CharField(max_length=200, blank=True)
     scores_csv = models.CharField(max_length=200, blank=True)
+    pp_plot = models.CharField(max_length=200, blank=True)
 
     def __str__(self):
         return self.case_annotated

@@ -54,6 +54,9 @@
     width: 100px;
     margin-left: 5px; }
 
+.container {
+  padding: 42px 0; }
+
 .project-header {
   position: relative;
   display: -webkit-box;

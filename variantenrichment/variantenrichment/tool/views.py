@@ -13,11 +13,23 @@ from .models import (
     VariantFile,
     ProjectFiles
 )
-from .tasks import annotate_task, check_cadd_task, filter_task
+from .tasks import annotate_task, check_cadd_task, prefilter_task
 
 
 def get_project(pk):
     return Project.objects.get(pk=pk)
+
+
+def clear_project_files(project):
+    project_files = ProjectFiles.objects.get(project=project)
+
+    project_files.case_filtered = ""
+    project_files.control_filtered = ""
+    project_files.cadd_case_id = ""
+    project_files.cadd_control_id = ""
+    project_files.cadd_case = ""
+    project_files.cadd_control = ""
+    project_files.save()
 
 
 class ProjectCreateView(CreateView):
@@ -26,6 +38,7 @@ class ProjectCreateView(CreateView):
     form_class = ProjectForm
 
     def get_success_url(self, **kwargs):
+        print(self.object.title, self.object.population)
         return reverse_lazy(
             'project-detail',
             kwargs={'pk': self.object.pk}
@@ -56,10 +69,11 @@ class ProjectUpdateView(UpdateView):
 
     def get_success_url(self, **kwargs):
         project = get_project(self.kwargs['pk'])
-        print(project)
+        print(project, project.population, self.object.population)
         if project.state != "initial" and project.state != "annotated":
             project.state = "annotated"
             project.save()
+            clear_project_files(project)
 
         return reverse_lazy(
             'project-detail',
@@ -78,6 +92,7 @@ class FileUploadView(CreateView):
         if project.state != "initial":
             project.state = "initial"
             project.save()
+            clear_project_files(project)
 
         return reverse_lazy(
             'project-detail',
@@ -115,6 +130,7 @@ class FilesDeleteView(FormView):
             if project.state != "initial":
                 project.state = "initial"
                 project.save()
+                clear_project_files(project)
 
             return redirect('project-detail', pk=self.kwargs['pk'])
 
@@ -155,7 +171,7 @@ class ConfirmProcessingView(FormView):
         if project_state == "initial":
             annotate_task.apply_async(args=[bj.pk], countdown=1)
         else:
-            filter_task.apply_async(args=[bj.pk], countdown=1)
+            prefilter_task.apply_async(args=[bj.pk], countdown=1)
 
         return super().form_valid(form)
 
