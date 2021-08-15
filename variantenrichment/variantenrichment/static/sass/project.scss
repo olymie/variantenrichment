@@ -67,7 +67,21 @@ $red: #b94a48;
 }
 
 .project-body {
+    display: flex;
     margin-top: 42px;
+}
+
+.project-image {
+    flex-shrink: 0;
+    margin-left: 42px;
+
+    &__description {
+        text-align: center;
+    }
+}
+
+.project-details {
+    flex-grow: 1;
 }
 
 .project-detail {
@@ -85,9 +99,14 @@ $red: #b94a48;
 }
 
 .project-jobs {
-    margin-top: 42px;
+    margin-top: 62px;
 }
 
 .project-actions {
-    margin-top: 62px;
+    margin-top: 42px;
+}
+
+.results-actions {
+    display: flex;
+    justify-content: space-between;
 }

@@ -15,7 +15,7 @@ function initFileNames() {
 }
 
 function initResultTable() {
-   const resultTable = document.querySelector(".table-results");
+   const resultTable = document.querySelector(".results-table");
    if (!resultTable) return;
 
    const shortViewButton = document.querySelector(".do-displayCompact");
@@ -23,15 +23,15 @@ function initResultTable() {
    shortViewButton.addEventListener("click", () => {
       if (shortViewButton.classList.contains("is-active")) {
          shortViewButton.classList.remove("is-active");
-         resultTable.classList.remove("table-results__compact");
+         resultTable.classList.remove("results-table__compact");
       } else {
          shortViewButton.classList.add("is-active");
-         resultTable.classList.add("table-results__compact");
+         resultTable.classList.add("results-table__compact");
       }
    })
 
    const pValueInput = document.querySelector(".do-displayRelevant");
-   const tableRows = [].slice.call(document.querySelectorAll(".table-results tbody tr"));
+   const tableRows = [].slice.call(document.querySelectorAll(".results-table tbody tr"));
 
    pValueInput.addEventListener("keyup", () => {
       const pVal = parseFloat(pValueInput.value) || 1;
@@ -39,7 +39,7 @@ function initResultTable() {
       tableRows.forEach(tr => {
          tr.classList.remove("is-hidden");
 
-         const pValCell = tr.querySelector(".table-results__p");
+         const pValCell = tr.querySelector(".results-table__p");
          if (!pValCell) {
             if (tr.previousElementSibling.classList.contains("is-hidden")){
                tr.classList.add("is-hidden");

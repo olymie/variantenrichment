@@ -13,6 +13,7 @@ from variantenrichment.tool.views import (
     FilesDeleteView,
     ConfirmProcessingView,
     CheckCaddView,
+    RunStatsView,
     ProjectResultsView,
     SearchView
 )
@@ -35,6 +36,7 @@ urlpatterns = [
     path("project/delete-files/<uuid:pk>/", FilesDeleteView.as_view(), name="files-delete"),
     path("project/start-processing/<uuid:pk>/", ConfirmProcessingView.as_view(), name="confirm-processing"),
     path("project/check-cadd/<uuid:pk>", CheckCaddView.as_view(), name="check-cadd"),
+    path("project/run-statistics/<uuid:pk>", RunStatsView.as_view(), name="run-statistics"),
     path("project/results/<uuid:pk>/", ProjectResultsView.as_view(), name="project-results"),
     path("search/", SearchView.as_view(), name="search"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

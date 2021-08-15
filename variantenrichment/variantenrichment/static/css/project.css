@@ -27,10 +27,10 @@
 .is-hidden {
   display: none; }
 
-.table-results tr:nth-child(2n + 1) td, .table-results tr:nth-child(2n + 1) th {
+.results-table tr:nth-child(2n + 1) td, .results-table tr:nth-child(2n + 1) th {
   border-top-width: 2px; }
 
-.table-results__compact .is-additional {
+.results-table__compact .is-additional {
   display: none; }
 
 .filter {
@@ -82,7 +82,22 @@
       background-color: #c5d86d; }
 
 .project-body {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
   margin-top: 42px; }
+
+.project-image {
+  -ms-flex-negative: 0;
+      flex-shrink: 0;
+  margin-left: 42px; }
+  .project-image__description {
+    text-align: center; }
+
+.project-details {
+  -webkit-box-flex: 1;
+      -ms-flex-positive: 1;
+          flex-grow: 1; }
 
 .project-detail + .project-detail {
   margin-top: 10px; }
@@ -93,7 +108,15 @@
     margin-top: 5px; }
 
 .project-jobs {
-  margin-top: 42px; }
+  margin-top: 62px; }
 
 .project-actions {
-  margin-top: 62px; }
+  margin-top: 42px; }
+
+.results-actions {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between; }

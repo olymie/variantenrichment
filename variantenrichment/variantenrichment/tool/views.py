@@ -1,4 +1,4 @@
-from time import sleep
+from base64 import b64encode
 
 from django.shortcuts import render, redirect
 from django.core.exceptions import ValidationError
@@ -13,7 +13,7 @@ from .models import (
     VariantFile,
     ProjectFiles
 )
-from .tasks import annotate_task, check_cadd_task, prefilter_task
+from .tasks import annotate_task, check_cadd_task, prefilter_task, stats_task
 
 
 def get_project(pk):
@@ -30,6 +30,13 @@ def clear_project_files(project):
     project_files.cadd_case = ""
     project_files.cadd_control = ""
     project_files.save()
+
+
+def get_encoded_content(file, filetype):
+    with open(file, "rb") as f:
+        content = f.read()
+    content = b64encode(content).decode()
+    return "data:%s;base64,%s" % (filetype, content)
 
 
 class ProjectCreateView(CreateView):
@@ -60,6 +67,13 @@ class ProjectDetailView(DetailView):
         self.request.session['selected_files'] = file_ids
 
         return redirect('files-delete', pk=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_files = ProjectFiles.objects.get(project=Project.objects.get(uuid=self.kwargs['pk']))
+
+        context["pp_plot"] = get_encoded_content(project_files.pp_plot, "image/png")
+        return context
 
 
 class ProjectUpdateView(UpdateView):
@@ -147,6 +161,18 @@ class CheckCaddView(View):
         return redirect('project-detail', pk=self.kwargs['pk'])
 
 
+class RunStatsView(View):
+    def get(self, *args, **kwargs):
+        bj = BackgroundJob(
+            name="Analyzing",
+            project=Project.objects.get(uuid=self.kwargs['pk']),
+            state="new"
+        )
+        bj.save()
+        stats_task.apply_async(args=[bj.pk], countdown=1)
+        return redirect('project-detail', pk=self.kwargs['pk'])
+
+
 class ConfirmProcessingView(FormView):
     model = Project
     form_class = ConfirmProcessingForm
@@ -196,6 +222,7 @@ class ProjectResultsView(TemplateView):
                     scores.append(dict(zip(header, line_arr)))
 
         context["scores"] = scores
+        context["scores_content"] = get_encoded_content(project_files.scores_csv, "text/csv;charset=utf-8")
         return context
 
 

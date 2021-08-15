@@ -518,5 +518,5 @@ def save_pp_plot(x_sample, y_sample, output_file):
     fig, ax = plt.subplots()
     ax.scatter(x_sample, y_sample, color="royalblue")
     ax.plot([0, 1], [0, 1], color="dimgrey", ls="dashed")
-    fig.savefig(output_file)
+    fig.savefig(output_file, bbox_inches='tight')
 

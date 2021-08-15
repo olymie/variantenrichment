@@ -39,6 +39,7 @@ class Project(models.Model):
         ('cadd-waiting', 'Waiting for CADD answer'),
         ('cadd-checking', 'Checking if CADD scores are ready'),
         ('cadd-filtering', 'Annotating with CADD functional scores and filtering data sets by PHRED cutoff'),
+        ('cadd-error', 'No answer from CADD server'),
         ('analyzing', 'Analyzing datasets and computing statistics'),
         ('done', 'Done')
     ]

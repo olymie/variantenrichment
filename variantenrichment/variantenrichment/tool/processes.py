@@ -176,7 +176,7 @@ def check_quality(project: Project):
                                     output_file=project_files_dir + "/scores.synonymous")
 
     pp_plot = visualize_p_values(scores_file=scores_syn,
-                                 output_file=project_files_dir + "/pp_plot.png")
+                                 output_file=project_files_dir + "/pp_plot")
 
     project_files.pp_plot = pp_plot
     project_files.save()
@@ -226,6 +226,12 @@ def check_cadd(project: Project):
         project_files.cadd_control_id = post_file_cadd(vcf_file=project_files.control_filtered)
 
     project_files.save()
+
+    cadd_posted = project_files.cadd_case_id and project_files.cadd_control_id
+    if not cadd_posted:
+        project.state = "cadd-error"
+        project.save()
+        return cadd_posted
 
     if not project_files.cadd_case:
         project_files.cadd_case = save_cadd_file(cadd_id=project_files.cadd_case_id,

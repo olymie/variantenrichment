@@ -7,83 +7,83 @@
     <span class="project-header__uuid">{{project.uuid}}</span>
 </header>
 
-<section class="project-body">
-    <div class="project-detail">
-        <mark>Background set</mark>
-        : {{project.background}}
-    </div>
-    <div class="project-detail">
-        <mark>Impact</mark>
-        : {{project.impact}}
-    </div>
-    {% if project.impact_exception %}
-    <div class="project-detail">
-        <mark>Different impact</mark>
-        : {{project.impact_exception}}
-        for genes {{project.genes_exception}}
-    </div>
-    {% endif %}
-    <div class="project-detail">
-        <mark>Frequency</mark>
-        : {{project.frequency}}
-    </div>
-    {% if project.cadd_score %}
-    <div class="project-detail">
-        <mark>CADD Score</mark>
-        : {{project.cadd_score}}
-    </div>
-    {% endif %}
-    {% if project.genes %}
-    <div class="project-detail" data-file="{{project.genes}}">
-        <mark>Genes</mark>
-        : <span class="project-detail__value"></span>
-    </div>
-    {% endif %}
-    <div class="project-detail" data-file="{{project.inheritance}}">
-        <mark>Inheritance model</mark>
-        : <span class="project-detail__value"></span>
-    </div>
-    {% if project.population %}
+<main class="project-body">
+    <section class="project-details">
         <div class="project-detail">
-        <mark>Population</mark>
-        :
-        {% for pop in project.population %}
-            {{ pop }},
-        {% endfor %}
-    </div>
-    {% endif %}
+            <mark>Background set</mark>
+            : {{project.background}}
+        </div>
+        <div class="project-detail">
+            <mark>Impact</mark>
+            : {{project.impact}}
+        </div>
+        {% if project.impact_exception %}
+        <div class="project-detail">
+            <mark>Different impact</mark>
+            : {{project.impact_exception}}
+            for genes {{project.genes_exception}}
+        </div>
+        {% endif %}
+        <div class="project-detail">
+            <mark>Frequency</mark>
+            : {{project.frequency}}
+        </div>
+        {% if project.cadd_score %}
+        <div class="project-detail">
+            <mark>CADD Score</mark>
+            : {{project.cadd_score}}
+        </div>
+        {% endif %}
+        {% if project.genes %}
+        <div class="project-detail" data-file="{{project.genes}}">
+            <mark>Genes</mark>
+            : <span class="project-detail__value"></span>
+        </div>
+        {% endif %}
+        <div class="project-detail" data-file="{{project.inheritance}}">
+            <mark>Inheritance model</mark>
+            : <span class="project-detail__value"></span>
+        </div>
+        {% if project.population %}
+            <div class="project-detail">
+            <mark>Population</mark>
+            :
+            {% for pop in project.population %}
+                {{ pop }},
+            {% endfor %}
+        </div>
+        {% endif %}
 
-    <div class="project-detail">
-        <mark>VCF files:</mark>
+        <div class="project-detail">
+            <mark>VCF files:</mark>
 
-        <form method="POST">{% csrf_token %}
-            {% with variant_files=project.variantfile_set.all %}
-            <ul class="project-detail__files">
-                {% for vcf in variant_files %}
-                <li class="form-check">
-                    <input type="checkbox" name="file_{{ vcf.id }}" id="file_{{ vcf.id }}" value="1" class="form-check-input"/>
-                    <label class="form-check-label" for="file_{{ vcf.id }}">{{ vcf.individual_name }}</label>
-                </li>
-                {% endfor %}
-            </ul>
+            <form method="POST">{% csrf_token %}
+                {% with variant_files=project.variantfile_set.all %}
+                <ul class="project-detail__files">
+                    {% for vcf in variant_files %}
+                    <li class="form-check">
+                        <input type="checkbox" name="file_{{ vcf.id }}" id="file_{{ vcf.id }}" value="1" class="form-check-input"/>
+                        <label class="form-check-label" for="file_{{ vcf.id }}">{{ vcf.individual_name }}</label>
+                    </li>
+                    {% endfor %}
+                </ul>
 
-            {% if variant_files and project.state == "initial" or variant_files and project.state == "done" or variant_files and project.state == "annotated" %}
-            <input type="submit" name="delete-files" value="Delete selected files" class="btn button button--secondary">
-            {% endif %}
+                {% if variant_files and project.state == "initial" or variant_files and project.state == "done" or variant_files and project.state == "annotated" %}
+                <input type="submit" name="delete-files" value="Delete selected files" class="btn button button--secondary">
+                {% endif %}
 
-            {% if project.state == "initial" or project.state == "done" or project.state == "annotated" %}
-            <a href="{% url 'file-upload' project.uuid %}" class="btn button button--secondary">Add a new VCF file</a>
-            {% endif %}
-            {% endwith %}
-        </form>
-    </div>
-</section>
-
-<ul class="project-jobs">
-    {% for job in project.backgroundjob_set.all %}
-    <li>{{ job.name }}: {{ job.state }}</li>
-    {% endfor %}
-</ul>
+                {% if project.state == "initial" or project.state == "done" or project.state == "annotated" %}
+                <a href="{% url 'file-upload' project.uuid %}" class="btn button button--secondary">Add a new VCF file</a>
+                {% endif %}
+                {% endwith %}
+            </form>
+        </div>
+    </section>
+    <figure class="project-image">
+        <img src="{{ pp_plot }}" alt="PP plot for synonymous variants">
+        <figcaption class="project-image__description">PP plot for synonymous variants found in case/control files</figcaption>
+    </figure>
+</main>
 
 <section class="project-actions">
     {% if project.state == "cadd-waiting" %}
@@ -91,6 +91,16 @@
         Your files have been posted to CADD server, but the results are not ready yet. Click the button below to check again.
     </p>
     <a href="{% url 'check-cadd' project.uuid %}" class="btn button button--primary">Check CADD answer</a>
+    <a href="{% url 'run-statistics' project.uuid %}" class="btn button button--primary">Run without CADD scores</a>
+    {% endif %}
+
+    {% if project.state == "cadd-error" %}
+    <p class="">
+        There has been a problem with posting your files to CADD. Please note that CADD server only allows files up to
+        2 Mb to be analyzed.
+    </p>
+    <a href="{% url 'check-cadd' project.uuid %}" class="btn button button--primary">Try posting again</a>
+    <a href="{% url 'run-statistics' project.uuid %}" class="btn button button--primary">Run without CADD scores</a>
     {% endif %}
 
     {% if project.state == "initial" or project.state == "annotated" %}
@@ -104,6 +114,16 @@
     {% if project.state == "done" %}
     <a href="{% url 'project-results' project.uuid %}" class="btn button button--primary">Show results</a>
     {% endif %}
-
-    {% endblock content %}
 </section>
+
+
+<div class="project-jobs">
+    <h3>Running and completed jobs for your project</h3>
+    <ul>
+        {% for job in project.backgroundjob_set.all %}
+        <li>{{ job.name }}: {{ job.state }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock content %}
