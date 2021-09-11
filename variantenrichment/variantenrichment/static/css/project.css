@@ -23,9 +23,16 @@
     border-color: #7392b7; }
     .button--secondary:hover {
       background-color: #fafbfc; }
+    .button--secondary.is-active {
+      background: #7392b7;
+      border-color: #7392b7;
+      color: #ffffff; }
 
 .is-hidden {
   display: none; }
+
+.error-message {
+  color: #f96f5d; }
 
 .results-table tr:nth-child(2n + 1) td, .results-table tr:nth-child(2n + 1) th {
   border-top-width: 2px; }
@@ -46,13 +53,45 @@
   margin: 42px 0; }
   .filter__button {
     margin-right: 32px; }
-    .filter__button.is-active {
-      background: #7392b7;
-      border-color: #7392b7;
-      color: #ffffff; }
   .filter__input {
     width: 100px;
     margin-left: 5px; }
+
+.actions {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap; }
+  .actions__description {
+    width: 100%; }
+  .actions .button {
+    margin-right: 20px; }
+
+ul.field {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  list-style: none;
+  border: 0;
+  padding-left: 0; }
+  ul.field > li label {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    margin-right: 20px;
+    line-height: 1; }
+  ul.field > li input[type=checkbox] {
+    width: auto;
+    height: auto;
+    margin-right: 5px; }
+
+input[type=file].field {
+  border: 0;
+  padding-left: 0; }
 
 .container {
   padding: 42px 0; }
@@ -102,6 +141,10 @@
 .project-detail + .project-detail {
   margin-top: 10px; }
 
+.project-detail + .actions,
+.actions + .project-detail {
+  margin-top: 20px; }
+
 .project-detail__files {
   list-style: none; }
   .project-detail__files li {
@@ -111,12 +154,12 @@
   margin-top: 62px; }
 
 .project-actions {
+  margin-top: 62px; }
+
+.form-actions {
   margin-top: 42px; }
 
 .results-actions {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
   -webkit-box-pack: justify;
       -ms-flex-pack: justify;
           justify-content: space-between; }

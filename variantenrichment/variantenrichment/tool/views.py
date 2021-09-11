@@ -1,3 +1,4 @@
+import time
 from base64 import b64encode
 
 from django.shortcuts import render, redirect
@@ -70,9 +71,14 @@ class ProjectDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        project_files = ProjectFiles.objects.get(project=Project.objects.get(uuid=self.kwargs['pk']))
+        project = Project.objects.get(uuid=self.kwargs['pk'])
 
-        context["pp_plot"] = get_encoded_content(project_files.pp_plot, "image/png")
+        if ProjectFiles.objects.filter(project=project).exists():
+            project_files = ProjectFiles.objects.get(project=project)
+            print(project_files, project_files.case_filtered, project_files.pp_plot)
+            context["pp_plot"] = get_encoded_content(
+                project_files.pp_plot, "image/png") if project_files.pp_plot else ""
+
         return context
 
 
@@ -158,6 +164,7 @@ class CheckCaddView(View):
         )
         bj.save()
         check_cadd_task.apply_async(args=[bj.pk], countdown=1)
+        time.sleep(1)
         return redirect('project-detail', pk=self.kwargs['pk'])
 
 
@@ -170,6 +177,7 @@ class RunStatsView(View):
         )
         bj.save()
         stats_task.apply_async(args=[bj.pk], countdown=1)
+        time.sleep(1)
         return redirect('project-detail', pk=self.kwargs['pk'])
 
 
@@ -179,6 +187,7 @@ class ConfirmProcessingView(FormView):
     template_name = "pages/confirm_processing.html"
 
     def get_success_url(self, **kwargs):
+        time.sleep(1)
         return reverse_lazy(
             'project-detail',
             kwargs={'pk': self.kwargs['pk']}

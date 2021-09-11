@@ -371,6 +371,14 @@ CADD_URL_UPLOAD = CADD_URL + "upload"
 
 
 def post_file_cadd(vcf_file):
+    if not vcf_file.endswith(".gz"):
+        vcf_compressed = subprocess.check_output([
+            "bgzip", "-c", vcf_file
+        ])
+        with open(vcf_file + ".gz", "wb+") as tmp_file:
+            tmp_file.write(vcf_compressed)
+        vcf_file += ".gz"
+
     try:
         file = {"file": open(vcf_file, "rb")}
 
@@ -398,7 +406,6 @@ def save_cadd_file(cadd_id, output_file):
 
     if requests.head(cadd_file_url).status_code == 200:
         cadd_scores = requests.get(cadd_file_url)
-        # open(output_file + ".tsv.gz", "wb").write(cadd_scores.content)
 
         with open(output_file + ".tsv.gz", "wb") as tsv_file:
             tsv_file.write(cadd_scores.content)
@@ -495,6 +502,7 @@ def find_fisher_scores(csv_case, csv_control, output_file):
         pvalues.append(pvalue)
 
     score_df["p"] = pvalues
+    score_df = score_df.sort_values("p")
     score_df.to_csv(output_file + '.csv')
 
     return output_file + '.csv'

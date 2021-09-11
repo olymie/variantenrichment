@@ -1,9 +1,28 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block content %}
 <form method="post" enctype="multipart/form-data">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Update">
-    <a href="{% url 'project-detail' view.kwargs.pk %}">Cancel</a>
+    {% for hidden_field in form.hidden_fields %}
+    {{ hidden_field }}
+    {% endfor %}
+
+    {% for field in form.visible_fields %}
+    <div class="form-group row">
+        <label for="{{ field.id_for_label }}" class="col-sm-2 col-form-label">{{ field.label }}</label>
+        <div class="col-sm-7">
+            {% render_field field class="form-control field" %}
+            {% if field.help_text %}
+            <small class="form-text text-muted">{{ field.help_text }}</small>
+            {% endif %}
+        </div>
+
+    </div>
+    {% endfor %}
+
+    <div class="actions form-actions">
+        <input type="submit" value="Update" class="btn button button--primary">
+        <a href="{% url 'project-detail' view.kwargs.pk %}" class="btn button button--secondary">Cancel</a>
+    </div>
 </form>
 {% endblock content %}

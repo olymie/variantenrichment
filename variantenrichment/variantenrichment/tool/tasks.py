@@ -3,6 +3,7 @@ from .processes import assemble_case_sample, filter_samples_initial, filter_samp
     check_quality, count_statistics, check_cadd, cadd_filter_samples
 from .models import BackgroundJob
 
+
 @app.task
 def annotate_task(bj_id):
     bj = BackgroundJob.objects.get(pk=bj_id)
@@ -41,14 +42,6 @@ def prefilter_task(bj_id):
     )
     bj_new.save()
     check_quality_task.apply_async(args=[bj_new.pk], countdown=1)
-
-    bj_new = BackgroundJob(
-        name="Filtering",
-        project=bj.project,
-        state="new"
-    )
-    bj_new.save()
-    filter_task.apply_async(args=[bj_new.pk], countdown=2)
 
 
 @app.task
@@ -91,6 +84,14 @@ def check_quality_task(bj_id):
 
     bj.state = "done"
     bj.save()
+
+    bj_new = BackgroundJob(
+        name="Filtering",
+        project=bj.project,
+        state="new"
+    )
+    bj_new.save()
+    filter_task.apply_async(args=[bj_new.pk], countdown=1)
 
 
 @app.task

@@ -3,7 +3,7 @@
 {% block content %}
 
 <header class="filter">
-    <button class="btn filter__button do-displayCompact">Show p values only</button>
+    <button class="btn filter__button button button--secondary do-displayCompact">Show p values only</button>
 <!--    &lt;!&ndash;&ndash;&gt;<button class="btn button-filter do-displayRelevant">Show genes with significant difference</button>-->
     <span>Show genes with p value <= </span>
     <input class="form-control filter__input do-displayRelevant" type="text" placeholder="" value="1">
@@ -26,7 +26,7 @@
             <td class="is-additional">case</td>
             <td class="is-additional">{{ line.case_pos }}</td>
             <td class="is-additional">{{ line.case_neg }}</td>
-            <td rowspan="2" class="results-table__p">{{ line.p|floatformat:4}}</td>
+            <td rowspan="2" class="results-table__p">{{ line.p }}</td>
         </tr>
         <tr>
             <td class="is-additional">control</td>
@@ -37,7 +37,7 @@
     </tbody>
 </table>
 
-<footer class="results-actions">
+<footer class="actions results-actions">
     <a href="{% url 'project-detail' view.kwargs.pk %}">Back to project detail</a>
     <a href="{{ scores_content }}" download="scores.csv" class="btn button button--primary">Download scores</a>
 </footer>

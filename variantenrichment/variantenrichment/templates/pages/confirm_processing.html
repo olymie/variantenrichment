@@ -4,7 +4,10 @@
 <h2>Do you want to start processing your data?</h2>
 <form method="post">{% csrf_token %}
     {{ form.as_p }}
-    <input type="submit" value="Process">
-    <a href="{% url 'project-detail' view.kwargs.pk %}">Cancel</a>
+    <div class="actions">
+        <input type="submit" value="Process" class="btn button button--primary">
+        <a href="{% url 'project-detail' view.kwargs.pk %}" class="btn button button--secondary">Cancel</a>
+    </div>
+
 </form>
 {% endblock content %}

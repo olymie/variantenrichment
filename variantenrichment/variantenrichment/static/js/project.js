@@ -12,6 +12,13 @@ function initFileNames() {
       const detailValue = detail.querySelector('.project-detail__value');
       detailValue.innerText = nameSplit[nameSplit.length - 1]
    });
+
+   const linksToFiles = [].slice.call(document.querySelectorAll('form .form-group a[href*="media/projects"]'))
+
+   linksToFiles.forEach(link => {
+      const hrefSplit = link.href.split('/');
+      link.innerText = hrefSplit[hrefSplit.length - 1];
+   })
 }
 
 function initResultTable() {
