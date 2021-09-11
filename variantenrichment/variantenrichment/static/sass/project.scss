@@ -1,7 +1,3 @@
-
-
-
-
 // project specific CSS goes here
 
 ////////////////////////////////
@@ -89,6 +85,11 @@ $red: #b94a48;
         margin-top: 10px;
     }
 
+    & + .actions,
+    .actions + & {
+        margin-top: 20px;
+    }
+
     &__files {
         list-style: none;
 
@@ -103,10 +104,13 @@ $red: #b94a48;
 }
 
 .project-actions {
+    margin-top: 62px;
+}
+
+.form-actions {
     margin-top: 42px;
 }
 
 .results-actions {
-    display: flex;
     justify-content: space-between;
 }

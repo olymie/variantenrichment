@@ -45,57 +45,72 @@
             : <span class="project-detail__value"></span>
         </div>
         {% if project.population %}
-            <div class="project-detail">
+        <div class="project-detail">
             <mark>Population</mark>
             :
             {% for pop in project.population %}
-                {{ pop }},
+            {{ pop }},
             {% endfor %}
         </div>
         {% endif %}
 
+        <div class="actions">
+            {% if project.state == "initial" or project.state == "done" or project.state == "annotated" or project.state == "cadd-error" %}
+            <a href="{% url 'project-update' project.uuid %}" class="btn button button--secondary">Update parameters</a>
+            {% endif %}
+        </div>
+
         <div class="project-detail">
             <mark>VCF files:</mark>
-
             <form method="POST">{% csrf_token %}
                 {% with variant_files=project.variantfile_set.all %}
                 <ul class="project-detail__files">
                     {% for vcf in variant_files %}
                     <li class="form-check">
-                        <input type="checkbox" name="file_{{ vcf.id }}" id="file_{{ vcf.id }}" value="1" class="form-check-input"/>
+                        <input type="checkbox" name="file_{{ vcf.id }}" id="file_{{ vcf.id }}" value="1"
+                               class="form-check-input"/>
                         <label class="form-check-label" for="file_{{ vcf.id }}">{{ vcf.individual_name }}</label>
                     </li>
                     {% endfor %}
                 </ul>
-
-                {% if variant_files and project.state == "initial" or variant_files and project.state == "done" or variant_files and project.state == "annotated" %}
-                <input type="submit" name="delete-files" value="Delete selected files" class="btn button button--secondary">
-                {% endif %}
-
-                {% if project.state == "initial" or project.state == "done" or project.state == "annotated" %}
-                <a href="{% url 'file-upload' project.uuid %}" class="btn button button--secondary">Add a new VCF file</a>
-                {% endif %}
                 {% endwith %}
+
+                <div class="actions">
+                    {% if variant_files and project.state == "initial" or project.state == "done" or project.state == "annotated" or project.state == "cadd-error" %}
+                    <input type="submit" name="delete-files" value="Delete selected files"
+                           class="btn button button--secondary">
+                    {% endif %}
+
+                    {% if project.state == "initial" or project.state == "done" or project.state == "annotated" or project.state == "cadd-error" %}
+                    <a href="{% url 'file-upload' project.uuid %}" class="btn button button--secondary">Add a new VCF
+                        file</a>
+                    {% endif %}
+                </div>
             </form>
         </div>
     </section>
+
+    {% if pp_plot %}
     <figure class="project-image">
         <img src="{{ pp_plot }}" alt="PP plot for synonymous variants">
-        <figcaption class="project-image__description">PP plot for synonymous variants found in case/control files</figcaption>
+        <figcaption class="project-image__description">PP plot for synonymous variants found in case/control files
+        </figcaption>
     </figure>
+    {% endif %}
 </main>
 
-<section class="project-actions">
+<section class="actions project-actions">
     {% if project.state == "cadd-waiting" %}
-    <p class="">
-        Your files have been posted to CADD server, but the results are not ready yet. Click the button below to check again.
+    <p class="actions__description">
+        Your files have been posted to CADD server, but the results are not ready yet. Click the button below to check
+        again.
     </p>
     <a href="{% url 'check-cadd' project.uuid %}" class="btn button button--primary">Check CADD answer</a>
     <a href="{% url 'run-statistics' project.uuid %}" class="btn button button--primary">Run without CADD scores</a>
     {% endif %}
 
     {% if project.state == "cadd-error" %}
-    <p class="">
+    <p class="actions__description error-message">
         There has been a problem with posting your files to CADD. Please note that CADD server only allows files up to
         2 Mb to be analyzed.
     </p>
@@ -103,12 +118,8 @@
     <a href="{% url 'run-statistics' project.uuid %}" class="btn button button--primary">Run without CADD scores</a>
     {% endif %}
 
-    {% if project.state == "initial" or project.state == "annotated" %}
+    {% if variant_files and project.state == "initial" or project.state == "annotated" %}
     <a href="{% url 'confirm-processing' project.uuid %}" class="btn button button--primary">Start processing</a>
-    {% endif %}
-
-    {% if project.state == "initial" or project.state == "done" or project.state == "annotated" %}
-    <a href="{% url 'project-update' project.uuid %}" class="btn button button--primary">Update parameters</a>
     {% endif %}
 
     {% if project.state == "done" %}
