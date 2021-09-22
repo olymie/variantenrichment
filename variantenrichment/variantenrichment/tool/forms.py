@@ -18,7 +18,7 @@ class ProjectForm(ModelForm):
         fields = [
             'title', 'impact', 'frequency',
             'impact_exception', 'genes_exception', 'background',
-            'population', 'cadd_score', 'genes', 'inheritance'
+            'population', 'cadd_score', 'genomic_regions', 'inheritance'
         ]
 
 

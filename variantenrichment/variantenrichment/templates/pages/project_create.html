@@ -3,15 +3,12 @@
 
 {% block content %}
 <form method="post" enctype="multipart/form-data">{% csrf_token %}
-    <!--    {{ form.as_p }}-->
-
-
     {% for hidden_field in form.hidden_fields %}
     {{ hidden_field }}
     {% endfor %}
 
     {% for field in form.visible_fields %}
-    <div class="form-group row">
+    <div class="form-group row {% if field.field.required %}is-required{% endif %}">
         <label for="{{ field.id_for_label }}" class="col-sm-2 col-form-label">{{ field.label }}</label>
         <div class="col-sm-7">
             {% render_field field class="form-control field" %}

@@ -93,6 +93,9 @@ input[type=file].field {
   border: 0;
   padding-left: 0; }
 
+.is-required .col-form-label::after {
+  content: " *"; }
+
 .container {
   padding: 42px 0; }
 

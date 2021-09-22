@@ -109,3 +109,11 @@ input[type=file] {
         padding-left: 0;
     }
 }
+
+.is-required {
+    .col-form-label {
+        &::after {
+            content: " *";
+        }
+    }
+}

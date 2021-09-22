@@ -47,7 +47,7 @@ def filter_samples_initial(project: Project):
     case_file = project_files.case_annotated
 
     control_file = str(project.background.file)
-    genes = project.genes
+    genes = project.genomic_regions
 
     # filter case and control files by user provided genes.bed with chromosomes and position numbers
     if genes:

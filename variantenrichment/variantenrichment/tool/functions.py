@@ -512,19 +512,18 @@ def visualize_p_values(scores_file, output_file):
     scores_df = pd.read_csv(scores_file,
                             header=0,
                             index_col=0)
-    p_obs = scores_df["p"]
-    p_exp = np.linspace(0, 1, num=len(p_obs) + 1, endpoint=False)[1:]
-    p_obs = np.sort(p_obs)
-    save_pp_plot(p_exp, p_obs, output_file + ".png")
+    p_obs = -np.log10(scores_df["p"])
+    p_exp = -np.log10(np.linspace(0, 1, num=len(p_obs) + 1, endpoint=False)[1:])
+    save_qq_plot(p_exp, p_obs, output_file + ".png")
 
     return output_file + ".png"
 
 
-def save_pp_plot(x_sample, y_sample, output_file):
+def save_qq_plot(x_sample, y_sample, output_file):
     plt.xlim(0, 1)
     plt.ylim(0, 1)
     fig, ax = plt.subplots()
     ax.scatter(x_sample, y_sample, color="royalblue")
-    ax.plot([0, 1], [0, 1], color="dimgrey", ls="dashed")
+    ax.plot([x_sample[0], x_sample[len(x_sample)-1]], [x_sample[0], x_sample[len(x_sample)-1]], color="dimgrey", ls="dashed")
     fig.savefig(output_file, bbox_inches='tight')
 

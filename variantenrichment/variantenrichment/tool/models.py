@@ -82,7 +82,7 @@ class Project(models.Model):
         on_delete=models.SET_DEFAULT)
     population = ArrayField(models.CharField(max_length=3), default=list, null=True, blank=True)
     cadd_score = models.IntegerField(null=True, blank=True)
-    genes = models.FileField(upload_to=get_project_directory, blank=True)
+    genomic_regions = models.FileField(upload_to=get_project_directory, blank=True)
     inheritance = models.FileField(upload_to=get_project_directory)
 
     def __str__(self):
