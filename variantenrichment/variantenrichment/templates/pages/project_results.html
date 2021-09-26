@@ -37,6 +37,15 @@
     </tbody>
 </table>
 
+
+{% if qq_plot %}
+<figure class="project-image">
+    <img src="{{ qq_plot }}" alt="QQ plot">
+    <figcaption class="project-image__description">QQ plot for variants in case/control files
+    </figcaption>
+</figure>
+{% endif %}
+
 <footer class="actions results-actions">
     <a href="{% url 'project-detail' view.kwargs.pk %}">Back to project detail</a>
     <a href="{{ scores_content }}" download="scores.csv" class="btn button button--primary">Download scores</a>

@@ -498,7 +498,7 @@ def find_fisher_scores(csv_case, csv_control, output_file):
         oddratio, pvalue = stats.fisher_exact([
             [row["case_pos"], row["case_neg"]],
             [row["control_pos"], row["control_neg"]]
-        ])
+        ], alternative="greater")
         pvalues.append(pvalue)
 
     score_df["p"] = pvalues

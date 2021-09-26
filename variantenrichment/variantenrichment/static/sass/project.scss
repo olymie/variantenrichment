@@ -69,7 +69,11 @@ $red: #b94a48;
 
 .project-image {
     flex-shrink: 0;
-    margin-left: 42px;
+    width: auto;
+
+    .project-body & {
+        margin-left: 42px;
+    }
 
     &__description {
         text-align: center;

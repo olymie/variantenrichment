@@ -75,9 +75,9 @@ class ProjectDetailView(DetailView):
 
         if ProjectFiles.objects.filter(project=project).exists():
             project_files = ProjectFiles.objects.get(project=project)
-            print(project_files, project_files.case_filtered, project_files.pp_plot)
-            context["pp_plot"] = get_encoded_content(
-                project_files.pp_plot, "image/png") if project_files.pp_plot else ""
+            print("hellooo", project_files.qq_plot_syn)
+            context["qq_plot_syn"] = get_encoded_content(
+                project_files.qq_plot_syn, "image/png") if project_files.qq_plot_syn else ""
 
         return context
 
@@ -232,6 +232,10 @@ class ProjectResultsView(TemplateView):
 
         context["scores"] = scores
         context["scores_content"] = get_encoded_content(project_files.scores_csv, "text/csv;charset=utf-8")
+
+        context["qq_plot"] = get_encoded_content(
+            project_files.qq_plot, "image/png") if project_files.qq_plot else ""
+
         return context
 
 

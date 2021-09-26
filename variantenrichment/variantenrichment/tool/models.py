@@ -121,7 +121,8 @@ class ProjectFiles(models.Model):
     case_csv = models.CharField(max_length=200, blank=True)
     control_csv = models.CharField(max_length=200, blank=True)
     scores_csv = models.CharField(max_length=200, blank=True)
-    pp_plot = models.CharField(max_length=200, blank=True)
+    qq_plot = models.CharField(max_length=200, blank=True)
+    qq_plot_syn = models.CharField(max_length=200, blank=True)
 
     def __str__(self):
         return self.case_annotated

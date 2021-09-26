@@ -175,10 +175,10 @@ def check_quality(project: Project):
                                     csv_control=control_csv_syn,
                                     output_file=project_files_dir + "/scores.synonymous")
 
-    pp_plot = visualize_p_values(scores_file=scores_syn,
-                                 output_file=project_files_dir + "/pp_plot")
+    qq_plot = visualize_p_values(scores_file=scores_syn,
+                                 output_file=project_files_dir + "/qq_plot")
 
-    project_files.pp_plot = pp_plot
+    project_files.qq_plot_syn = qq_plot
     project_files.save()
 
 
@@ -204,6 +204,11 @@ def count_statistics(project: Project):
                                                   output_file=project_files_dir + "/scores")
 
     project_files.case_csv, project_files.control_csv = case_csv, control_csv
+
+    qq_plot = visualize_p_values(scores_file=project_files.scores_csv,
+                                 output_file=project_files_dir + "/qq_plot")
+
+    project_files.qq_plot = qq_plot
     project_files.save()
 
     project.state = "done"

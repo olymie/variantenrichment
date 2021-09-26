@@ -132,7 +132,9 @@ input[type=file].field {
 .project-image {
   -ms-flex-negative: 0;
       flex-shrink: 0;
-  margin-left: 42px; }
+  width: auto; }
+  .project-body .project-image {
+    margin-left: 42px; }
   .project-image__description {
     text-align: center; }
 
