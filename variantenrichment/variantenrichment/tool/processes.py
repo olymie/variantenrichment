@@ -176,7 +176,7 @@ def check_quality(project: Project):
                                     output_file=project_files_dir + "/scores.synonymous")
 
     qq_plot = visualize_p_values(scores_file=scores_syn,
-                                 output_file=project_files_dir + "/qq_plot")
+                                 output_file=project_files_dir + "/qq_plot_syn")
 
     project_files.qq_plot_syn = qq_plot
     project_files.save()

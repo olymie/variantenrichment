@@ -68,6 +68,7 @@ $red: #b94a48;
 }
 
 .project-image {
+    display: inline-block;
     flex-shrink: 0;
     width: auto;
 
@@ -113,6 +114,7 @@ $red: #b94a48;
 
 .form-actions {
     margin-top: 42px;
+    align-items: center;
 }
 
 .results-actions {

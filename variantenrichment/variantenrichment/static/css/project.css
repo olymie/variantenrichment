@@ -99,6 +99,9 @@ input[type=file].field {
 .container {
   padding: 42px 0; }
 
+.nav-item--right {
+  margin-left: auto; }
+
 .project-header {
   position: relative;
   display: -webkit-box;
@@ -130,6 +133,7 @@ input[type=file].field {
   margin-top: 42px; }
 
 .project-image {
+  display: inline-block;
   -ms-flex-negative: 0;
       flex-shrink: 0;
   width: auto; }
@@ -162,7 +166,10 @@ input[type=file].field {
   margin-top: 62px; }
 
 .form-actions {
-  margin-top: 42px; }
+  margin-top: 42px;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center; }
 
 .results-actions {
   -webkit-box-pack: justify;
