@@ -1,3 +1,9 @@
 .container {
     padding: 42px 0;
 }
+
+.nav-item {
+    &--right {
+        margin-left: auto;
+    }
+}

@@ -9,6 +9,7 @@ import pandas as pd
 import vcfpy as vp
 import scipy.stats as stats
 import matplotlib.pyplot as plt
+import math
 
 
 def get_directory(path_to_dir):
@@ -512,7 +513,9 @@ def visualize_p_values(scores_file, output_file):
     scores_df = pd.read_csv(scores_file,
                             header=0,
                             index_col=0)
-    p_obs = -np.log10(scores_df["p"])
+    ps_raw = scores_df["p"]
+    ps_filtered = ps_raw[ps_raw != 1.0]
+    p_obs = -np.log10(ps_filtered)
     p_exp = -np.log10(np.linspace(0, 1, num=len(p_obs) + 1, endpoint=False)[1:])
     save_qq_plot(p_exp, p_obs, output_file + ".png")
 
@@ -520,10 +523,16 @@ def visualize_p_values(scores_file, output_file):
 
 
 def save_qq_plot(x_sample, y_sample, output_file):
-    plt.xlim(0, 1)
-    plt.ylim(0, 1)
+    m, b = np.polyfit(x_sample, y_sample, 1)
+
+    upper = math.ceil(max(max(x_sample), max(y_sample)) + 0.5)
     fig, ax = plt.subplots()
     ax.scatter(x_sample, y_sample, color="royalblue")
-    ax.plot([x_sample[0], x_sample[len(x_sample)-1]], [x_sample[0], x_sample[len(x_sample)-1]], color="dimgrey", ls="dashed")
+    ax.set_xlim(0, upper)
+    ax.set_ylim(0, upper)
+    ax.plot([0, upper], [0, upper], color="dimgrey")
+    ax.plot([0, upper], [b, b + m * upper], color="orange", ls="dashed")
+    ax.set_xlabel("-log10(p_exp)")
+    ax.set_ylabel("-log10(p_obs)")
     fig.savefig(output_file, bbox_inches='tight')
 

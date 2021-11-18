@@ -73,7 +73,6 @@
                     </li>
                     {% endfor %}
                 </ul>
-                {% endwith %}
 
                 <div class="actions">
                     {% if variant_files and project.state == "initial" or project.state == "done" or project.state == "annotated" or project.state == "cadd-error" %}
@@ -86,6 +85,7 @@
                         file</a>
                     {% endif %}
                 </div>
+                {% endwith %}
             </form>
         </div>
     </section>
@@ -118,16 +118,18 @@
     <a href="{% url 'run-statistics' project.uuid %}" class="btn button button--primary">Run without CADD scores</a>
     {% endif %}
 
+    {% with variant_files=project.variantfile_set.all %}
     {% if variant_files and project.state == "initial" or project.state == "annotated" %}
     <a href="{% url 'confirm-processing' project.uuid %}" class="btn button button--primary">Start processing</a>
     {% endif %}
+    {% endwith %}
 
     {% if project.state == "done" %}
     <a href="{% url 'project-results' project.uuid %}" class="btn button button--primary">Show results</a>
     {% endif %}
 </section>
 
-
+{% if project.backgroundjob_set.all %}
 <div class="project-jobs">
     <h3>Running and completed jobs for your project</h3>
     <ul>
@@ -136,5 +138,6 @@
         {% endfor %}
     </ul>
 </div>
+{% endif %}
 
 {% endblock content %}
